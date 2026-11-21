@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Spare Parts Reference{% endblock %}
+{% block page_title %}Service Spare Parts Availability{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-gears"></i> Spare Parts Stock Registry ({{ spare_parts|length }})</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Part ID</th>
+                    <th>Part Name</th>
+                    <th>Applicable Product</th>
+                    <th>Unit Price</th>
+                    <th>Available Stock</th>
+                    <th>Availability</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in spare_parts %}
+                    <tr>
+                        <td class="tabular-num">#{{ sp.spareid }}</td>
+                        <td><strong>{{ sp.partsname }}</strong></td>
+                        <td>{{ sp.prid.prname }} ({{ sp.prid.model }})</td>
+                        <td class="tabular-num">₹{{ sp.price|floatformat:2 }}</td>
+                        <td class="tabular-num" style="font-weight: 700;">{{ sp.qty }} units</td>
+                        <td>
+                            {% if sp.qty > 5 %}
+                                <span class="badge badge-success">In Stock</span>
+                            {% elif sp.qty > 0 %}
+                                <span class="badge badge-warning">Low ({{ sp.qty }})</span>
+                            {% else %}
+                                <span class="badge badge-danger">Out of Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No spare parts registered.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

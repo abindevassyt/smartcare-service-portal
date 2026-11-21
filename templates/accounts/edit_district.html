@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit District{% endblock %}
+{% block page_title %}Edit District #{{ district.Distid }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-pen-to-square"></i> Edit District Details</h2>
+        <a href="{% url 'accounts:manage_districts' %}" class="btn btn-secondary btn-sm">Back to List</a>
+    </div>
+
+    <form method="POST" action="{% url 'accounts:edit_district' district.Distid %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label" for="statid">State *</label>
+            <select id="statid" name="statid" class="form-control" required>
+                {% for st in states %}
+                    <option value="{{ st.statid }}" {% if district.statid_id == st.statid %}selected{% endif %}>{{ st.state }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="District">District Name *</label>
+            <input type="text" id="District" name="District" class="form-control" value="{{ district.District }}" required maxlength="20">
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                <i class="fa-solid fa-check"></i> Update District
+            </button>
+            <a href="{% url 'accounts:manage_districts' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

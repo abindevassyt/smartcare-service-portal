@@ -1,0 +1,485 @@
+{% extends 'base.html' %}
+
+{% block title %}Technician Workspace #{{ order.W_orderid }}{% endblock %}
+{% block page_title %}Service Order Execution: Ticket #{{ order.Serv_req_no }}{% endblock %}
+
+{% block content %}
+<!-- Ticket Header & Summary -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+    <div>
+        <span style="font-size: 13px; color: var(--text-muted);">Work Order ID:</span>
+        <strong style="font-size: 18px; color: var(--primary-navy);">#{{ order.W_orderid }}</strong>
+        <span style="margin-left: 10px;">
+            {% if in_warranty %}
+                <span class="badge badge-success"><i class="fa-solid fa-shield"></i> In Warranty (Free Service)</span>
+            {% else %}
+                <span class="badge badge-danger">Out of Warranty</span>
+            {% endif %}
+        </span>
+        <span style="margin-left: 6px;">
+            {% if order.w_stid.W_status == 'Completed' %}
+                <span class="badge badge-success">{{ order.w_stid.W_status }}</span>
+            {% elif order.w_stid.W_status == 'Irreparable' or order.w_stid.W_status == 'Cancelled' %}
+                <span class="badge badge-danger">{{ order.w_stid.W_status }}</span>
+            {% else %}
+                <span class="badge badge-warning">{{ order.w_stid.W_status }}</span>
+            {% endif %}
+        </span>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <a href="{% url 'accounts:tech_dashboard' %}" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left"></i> Back to Dashboard
+        </a>
+        {% if not invoice and order.w_stid.W_status != 'Completed' and order.w_stid.W_status != 'Cancelled' %}
+            <a href="{% url 'services:tech_generate_invoice' order.W_orderid %}" class="btn btn-success btn-sm">
+                <i class="fa-solid fa-file-invoice-dollar"></i> Generate Invoice
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Overview Cards Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-bottom: 24px;">
+    <!-- Appliance Details -->
+    <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            <i class="fa-solid fa-tv"></i> Appliance Specifications
+        </h3>
+        <p><strong>{{ order.reg_id.prid.prname }}</strong></p>
+        <p style="font-size: 12px; color: var(--text-muted);">Category: {{ order.reg_id.prid.pcatid.category }}</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Model: <code>{{ order.reg_id.prid.model }}</code></p>
+        <p style="font-size: 12px; color: var(--text-muted);">Serial Number: <strong>{{ order.prod_no }}</strong></p>
+        <p style="font-size: 12px; color: var(--text-muted);">Warranty Expiration: {{ order.reg_id.warnt_enddate|date:"d M Y" }}</p>
+    </div>
+
+    <!-- Customer Details -->
+    <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            <i class="fa-solid fa-user"></i> Customer Contact
+        </h3>
+        <p><strong>{{ order.reg_id.consumer_id.fname }} {{ order.reg_id.consumer_id.lname }}</strong></p>
+        <p style="font-size: 12px;"><i class="fa-solid fa-mobile-screen"></i> {{ order.reg_id.consumer_id.mob }}</p>
+        <p style="font-size: 12px;"><i class="fa-regular fa-envelope"></i> {{ order.reg_id.consumer_id.email }}</p>
+        <p style="font-size: 12px; color: var(--text-muted);"><i class="fa-solid fa-location-dot"></i> {{ order.reg_id.consumer_id.address }}, {{ order.reg_id.consumer_id.Distid.District }}</p>
+    </div>
+
+    <!-- Order Metadata & Invoice Summary -->
+    <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            <i class="fa-solid fa-clock-rotate-left"></i> Schedule & Invoicing
+        </h3>
+        <p style="font-size: 12px; color: var(--text-muted);">Service Call: <strong>{{ order.calltype }}</strong> ({{ order.loc_type }})</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Promised Date: <strong>{{ order.prom_del_date|default:"Pending Diagnosis" }}</strong></p>
+        <p style="font-size: 12px; color: var(--text-muted);">Jobsheet: <code>{{ order.jobsheet_type }}</code></p>
+        {% if invoice %}
+            <div style="margin-top: 8px; padding: 8px 12px; background: #DCFCE7; border: 1px solid #86EFAC; border-radius: 6px;">
+                <div style="font-size: 12px; color: #166534; font-weight: 700;">
+                    <i class="fa-solid fa-receipt"></i> Invoice #{{ invoice.Invoice_id }} Finalized
+                </div>
+                <div style="font-size: 14px; font-weight: 700; color: #14532D;">
+                    Total: ₹{{ invoice.Amount|floatformat:2 }}
+                </div>
+            </div>
+        {% else %}
+            <p style="font-size: 13px; font-weight: 700; color: var(--primary-navy); margin-top: 8px;">
+                Current Parts Total: ₹{{ parts_total|floatformat:2 }}
+            </p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Invoice Generation Banner if ready -->
+{% if not invoice and order.w_stid.W_status != 'Completed' and order.w_stid.W_status != 'Cancelled' %}
+    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h4 style="color: #1E40AF; margin-bottom: 4px; font-size: 15px;">
+                <i class="fa-solid fa-calculator"></i> Automated Invoice & Billing Engine
+            </h4>
+            <p style="font-size: 13px; color: #1E3A8A; margin: 0;">
+                {% if in_warranty %}
+                    Product is covered under warranty. Service charge and spare parts are ₹0.00.
+                {% else %}
+                    Appliance is out of warranty. Parts used: ₹{{ parts_total|floatformat:2 }}.
+                {% endif %}
+            </p>
+        </div>
+        <a href="{% url 'services:tech_generate_invoice' order.W_orderid %}" class="btn btn-primary">
+            <i class="fa-solid fa-file-invoice-dollar"></i> Generate Final Invoice
+        </a>
+    </div>
+{% endif %}
+
+<!-- Diagnostic & Execution Panels -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; margin-bottom: 24px;">
+
+    <!-- Panel 1: Update Status & Schedule -->
+    <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-list-check"></i> 1. Update Status & Schedule</h2>
+        </div>
+        <form method="POST" action="{% url 'services:tech_work_order_detail' order.W_orderid %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_status">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="status_id">Work Order Status *</label>
+                    <select id="status_id" name="status_id" class="form-control" required>
+                        {% for s in statuses %}
+                            <option value="{{ s.Wo_stid }}" {% if order.w_stid_id == s.Wo_stid %}selected{% endif %}>
+                                {{ s.W_status }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="jobsheet_type">Jobsheet Type *</label>
+                    <select id="jobsheet_type" name="jobsheet_type" class="form-control">
+                        <option value="Standard" {% if order.jobsheet_type == 'Standard' %}selected{% endif %}>Standard Repair</option>
+                        <option value="Warranty Replacement" {% if order.jobsheet_type == 'Warranty Replacement' %}selected{% endif %}>Warranty Replacement</option>
+                        <option value="Major Overhaul" {% if order.jobsheet_type == 'Major Overhaul' %}selected{% endif %}>Major Overhaul</option>
+                        <option value="Inspection Only" {% if order.jobsheet_type == 'Inspection Only' %}selected{% endif %}>Inspection Only</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="prom_del_date">Promised Delivery Date</label>
+                    <input type="date" id="prom_del_date" name="prom_del_date" value="{{ order.prom_del_date|date:'Y-m-d' }}" class="form-control">
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="status_remark">Progress Note / Reason for Status Change</label>
+                    <input type="text" id="status_remark" name="remark" placeholder="e.g. Component inspected, awaiting customer estimate confirmation..." class="form-control">
+                </div>
+            </div>
+            <div style="margin-top: 14px;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-save"></i> Save Status & Schedule
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Panel 2: Add Step-by-Step Activity Log -->
+    <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-pen-to-square"></i> 2. Record Activity Step</h2>
+        </div>
+        <form method="POST" action="{% url 'services:tech_work_order_detail' order.W_orderid %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_activity">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="act_status">Activity Status *</label>
+                    <select id="act_status" name="act_status" class="form-control" required>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Diagnosed">Diagnosed</option>
+                        <option value="Testing">Testing</option>
+                        <option value="Spare Pending">Spare Pending</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Irreparable">Irreparable</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="activity_remark">Activity Remark / Findings *</label>
+                    <textarea id="activity_remark" name="remark" rows="3" class="form-control" placeholder="Describe the diagnostic step, bench test result, or customer interaction..." required></textarea>
+                </div>
+            </div>
+            <div style="margin-top: 14px;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-plus"></i> Post Activity Log
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Diagnostics & Spare Parts Grids -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 24px; margin-bottom: 24px;">
+
+    <!-- Panel 3: Log Defects & Diagnostic Findings -->
+    <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-stethoscope"></i> 3. Log Defect Diagnostics</h2>
+        </div>
+        <form method="POST" action="{% url 'services:tech_work_order_detail' order.W_orderid %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="log_defect">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label" for="defect_bytech">Defect Name *</label>
+                    <input type="text" id="defect_bytech" name="defect_bytech" placeholder="e.g. PCB Power Circuit Failure" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="Condition">Unit Condition *</label>
+                    <select id="Condition" name="Condition" class="form-control">
+                        <option value="Good">Good</option>
+                        <option value="Fair" selected>Fair</option>
+                        <option value="Poor">Poor</option>
+                        <option value="Burnt">Burnt / Physical Damage</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="Symptom">Observed Symptom *</label>
+                    <input type="text" id="Symptom" name="Symptom" placeholder="e.g. No Power / Blinking LED" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="Actual_rep">Actual Repair Required *</label>
+                    <input type="text" id="Actual_rep" name="Actual_rep" placeholder="e.g. Capacitor Replacement" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="Faulty">Faulty? *</label>
+                    <select id="Faulty" name="Faulty" class="form-control">
+                        <option value="Yes" selected>Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="Repaired">Repaired Successfully? *</label>
+                    <select id="Repaired" name="Repaired" class="form-control">
+                        <option value="Yes" selected>Yes - Repaired</option>
+                        <option value="No">No - Irreparable</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="Spareused">Spare Parts Used? *</label>
+                    <select id="Spareused" name="Spareused" class="form-control">
+                        <option value="No">No</option>
+                        <option value="Yes" selected>Yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="Status">Diagnostic Status *</label>
+                    <select id="Status" name="Status" class="form-control">
+                        <option value="Diagnosed">Diagnosed</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Repaired">Repaired</option>
+                        <option value="Irreparable">Irreparable</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="defect_des">Technical Defect Details *</label>
+                    <textarea id="defect_des" name="defect_des" rows="2" class="form-control" placeholder="Detailed engineering diagnosis..." required></textarea>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="Msg">Diagnostic Message / Customer Advisory</label>
+                    <input type="text" id="Msg" name="Msg" placeholder="e.g. Advised user to use surge protector" class="form-control">
+                </div>
+            </div>
+            <div style="margin-top: 14px;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-stethoscope"></i> Save Defect Diagnosis
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Panel 4: Consume Spare Parts with Stock Validation -->
+    <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-gears"></i> 4. Allocate Spare Part</h2>
+        </div>
+        <form method="POST" action="{% url 'services:tech_work_order_detail' order.W_orderid %}">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_spare_part">
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="spare_id">Select Spare Part from Stock *</label>
+                    <select id="spare_id" name="spare_id" class="form-control" required>
+                        <option value="">-- Choose Spare Part --</option>
+                        {% for sp in available_spares %}
+                            <option value="{{ sp.spareid }}">
+                                {{ sp.partsname }} (₹{{ sp.price|floatformat:2 }}) - Stock: {{ sp.qty }} units - [{{ sp.prid.prname }}]
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="part_qty">Quantity to Use *</label>
+                    <input type="number" id="part_qty" name="qty" value="1" min="1" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reason">Replacement Reason *</label>
+                    <input type="text" id="reason" name="reason" value="Component Failure" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="position">Position / Location *</label>
+                    <input type="text" id="position" name="position" value="Internal" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="section">Section *</label>
+                    <input type="text" id="section" name="section" value="Main Circuit Board" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="defects">Defect Nature *</label>
+                    <input type="text" id="defects" name="defects" value="Burnt / Damaged" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="repair">Repair Action *</label>
+                    <input type="text" id="repair" name="repair" value="Replaced" class="form-control" required>
+                </div>
+            </div>
+            <div style="margin-top: 14px;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-toolbox"></i> Allocate & Deduct Stock
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Spare Parts Used on this Work Order -->
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="card-title"><i class="fa-solid fa-boxes-packing"></i> Spare Parts Used on this Order</h2>
+        <span style="font-size: 14px; font-weight: 700; color: var(--primary-navy);">
+            Total Spares Cost: ₹{{ parts_total|floatformat:2 }}
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Entry #</th>
+                    <th>Part Name</th>
+                    <th>Unit Price</th>
+                    <th>Qty Used</th>
+                    <th>Section / Position</th>
+                    <th>Reason / Repair</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in service_parts %}
+                    {% for dt in sp.details.all %}
+                        <tr>
+                            <td class="tabular-num">#{{ dt.ser_p_dtid }}</td>
+                            <td><strong>{{ dt.spareid.partsname }}</strong></td>
+                            <td class="tabular-num">₹{{ dt.spareid.price|floatformat:2 }}</td>
+                            <td class="tabular-num">{{ dt.Qty }}</td>
+                            <td>{{ sp.Section }} ({{ sp.Position }})</td>
+                            <td>{{ sp.Reason }} / {{ sp.Repair }}</td>
+                        </tr>
+                    {% endfor %}
+                {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            No spare parts recorded on this work order yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Diagnostics Logged -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-microchip"></i> Diagnostic Records Logged</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Defect #</th>
+                    <th>Defect Name</th>
+                    <th>Description</th>
+                    <th>Condition / Symptom</th>
+                    <th>Actual Repair</th>
+                    <th>Faulty</th>
+                    <th>Repaired</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in defects %}
+                    <tr>
+                        <td class="tabular-num">#{{ d.defect_id }}</td>
+                        <td><strong>{{ d.defect_bytech }}</strong></td>
+                        <td style="font-size: 13px;">{{ d.defect_des }}</td>
+                        <td>{{ d.Condition }} / {{ d.Symptom }}</td>
+                        <td>{{ d.Actual_rep }}</td>
+                        <td>
+                            {% if d.Faulty == 'Yes' %}
+                                <span class="badge badge-danger">Faulty</span>
+                            {% else %}
+                                <span class="badge badge-success">OK</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if d.Repaired == 'Yes' %}
+                                <span class="badge badge-success">Repaired</span>
+                            {% else %}
+                                <span class="badge badge-danger">Irreparable</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge badge-info">{{ d.Status }}</span></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            No diagnostic defects logged yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Activity Log History -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Chronological Activity Audit Trail</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Log #</th>
+                    <th>Status</th>
+                    <th>Remark / Description</th>
+                    <th>Date Logged</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in activities %}
+                    <tr>
+                        <td class="tabular-num">#{{ a.Activityno }}</td>
+                        <td>
+                            <span class="badge badge-info">{{ a.act_status }}</span>
+                        </td>
+                        <td>{{ a.Remark }}</td>
+                        <td>{{ a.cre_date|date:"d M Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            No activity logged yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Technician Directory{% endblock %}
+{% block page_title %}Service Technicians Field Directory{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <h2 class="card-title"><i class="fa-solid fa-id-badge"></i> Certified Technicians ({{ techs|length }})</h2>
+
+        <form method="GET" action="{% url 'accounts:tech_technicians' %}" style="display: flex; gap: 8px;">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search name, phone, qualifications..." class="form-control" style="width: 240px; padding: 6px 12px;">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i></button>
+            {% if query %}
+                <a href="{% url 'accounts:tech_technicians' %}" class="btn btn-secondary btn-sm">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">ID</th>
+                    <th>Technician Name</th>
+                    <th>Contact Info</th>
+                    <th>Region</th>
+                    <th>Qualifications</th>
+                    <th>Experience</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in techs %}
+                    <tr>
+                        <td class="tabular-num">#{{ t.techid }}</td>
+                        <td>
+                            <strong>{{ t.tech_name }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ t.Gender }}</div>
+                        </td>
+                        <td>
+                            <div><i class="fa-solid fa-mobile-screen"></i> {{ t.Mob }}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);"><i class="fa-regular fa-envelope"></i> {{ t.Email }}</div>
+                        </td>
+                        <td>
+                            {{ t.Distid.District }}, {{ t.statid.state }}
+                        </td>
+                        <td><code>{{ t.Quali }}</code></td>
+                        <td>{{ t.Exp }}</td>
+                        <td>
+                            <span class="badge badge-success">{{ t.Status }}</span>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                            No technicians found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

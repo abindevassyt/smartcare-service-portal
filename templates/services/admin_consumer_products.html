@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Consumer Registered Appliances{% endblock %}
+{% block page_title %}Registered Appliances Oversight{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-box-open"></i> Registered Appliances ({{ records|length }})</h2>
+        <form method="GET" action="{% url 'services:admin_consumer_products' %}" style="display: flex; gap: 8px;">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search customer, serial, card..." class="form-control" style="padding: 6px 12px; font-size: 13px; width: 220px;">
+            <select name="status" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 130px;">
+                <option value="">All Statuses</option>
+                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+                <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-filter"></i></button>
+            {% if query or status_filter %}<a href="{% url 'services:admin_consumer_products' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-xmark"></i></a>{% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Reg ID</th>
+                    <th>Consumer Name</th>
+                    <th>Product & Model</th>
+                    <th>Product Serial No</th>
+                    <th>Warranty Card No</th>
+                    <th>Invoice No / Date</th>
+                    <th>Warranty Validity</th>
+                    <th>Activation Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in records %}
+                    <tr>
+                        <td class="tabular-num">#{{ r.reg.Reg_id }}</td>
+                        <td>
+                            <strong>{{ r.reg.consumer_id.fname }} {{ r.reg.consumer_id.lname }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ r.reg.consumer_id.email }}</div>
+                        </td>
+                        <td>
+                            <strong>{{ r.reg.prid.prname }}</strong>
+                            <span class="badge badge-info">{{ r.reg.prid.pcatid.category }}</span>
+                        </td>
+                        <td class="tabular-num"><code>{{ r.reg.prod_no }}</code></td>
+                        <td class="tabular-num">{{ r.reg.warnt_cardno }}</td>
+                        <td>
+                            <div>#{{ r.reg.Invoice_no }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ r.reg.Invoice_date|date:"d M Y" }}</div>
+                        </td>
+                        <td>
+                            <div>Ends: {{ r.reg.warnt_enddate|date:"d M Y" }}</div>
+                            {% if r.is_warranty_valid %}
+                                <span class="badge badge-success"><i class="fa-solid fa-shield"></i> Under Warranty</span>
+                            {% else %}
+                                <span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Out of Warranty</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if r.reg.Isactive == 'Active' %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <form method="POST" action="{% url 'services:admin_toggle_product_activation' r.reg.Reg_id %}" style="display: inline-block;">
+                                {% csrf_token %}
+                                {% if r.reg.Isactive == 'Active' %}
+                                    <button type="submit" class="btn btn-secondary btn-sm" title="Mark as Pending">Deactivate</button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-success btn-sm" title="Activate Appliance">Activate</button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            No consumer appliance registrations found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

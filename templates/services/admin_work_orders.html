@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Work Orders{% endblock %}
+{% block page_title %}Service Tickets & Work Order Assignment{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-file-invoice"></i> Service Work Orders ({{ orders_data|length }})</h2>
+        <form method="GET" action="{% url 'services:admin_work_orders' %}" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <select name="status" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 150px;">
+                <option value="">All Statuses</option>
+                {% for st in statuses %}
+                    <option value="{{ st.Wo_stid }}" {% if status_filter == st.Wo_stid|stringformat:'i' %}selected{% endif %}>{{ st.W_status }}</option>
+                {% endfor %}
+            </select>
+            <select name="tech" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 170px;">
+                <option value="">All Technicians</option>
+                {% for t in technicians %}
+                    <option value="{{ t.techid }}" {% if tech_filter == t.techid|stringformat:'i' %}selected{% endif %}>{{ t.tech_name }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="q" value="{{ query }}" placeholder="Search req no, customer..." class="form-control" style="padding: 6px 12px; font-size: 13px; width: 200px;">
+            <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-filter"></i></button>
+            {% if query or status_filter or tech_filter %}<a href="{% url 'services:admin_work_orders' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-xmark"></i></a>{% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>WO ID</th>
+                    <th>Req No</th>
+                    <th>Consumer</th>
+                    <th>Product & Serial</th>
+                    <th>Warranty Check</th>
+                    <th>Assigned Tech</th>
+                    <th>Location</th>
+                    <th>Estimate Amt</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in orders_data %}
+                    <tr>
+                        <td class="tabular-num">#{{ item.order.W_orderid }}</td>
+                        <td class="tabular-num"><strong>{{ item.order.Serv_req_no }}</strong></td>
+                        <td>
+                            <div>{{ item.order.reg_id.consumer_id.fname }} {{ item.order.reg_id.consumer_id.lname }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> {{ item.order.reg_id.consumer_id.mob }}</div>
+                        </td>
+                        <td>
+                            <div><strong>{{ item.order.reg_id.prid.prname }}</strong></div>
+                            <div style="font-size: 11px; color: var(--text-muted);">S/N: <code>{{ item.order.prod_no }}</code></div>
+                        </td>
+                        <td>
+                            {% if item.in_warranty %}
+                                <span class="badge badge-success" title="Warranty Valid until {{ item.order.reg_id.warnt_enddate|date:'d M Y' }}">
+                                    <i class="fa-solid fa-shield"></i> In Warranty
+                                </span>
+                            {% else %}
+                                <span class="badge badge-danger" title="Warranty Expired on {{ item.order.reg_id.warnt_enddate|date:'d M Y' }}">
+                                    <i class="fa-solid fa-triangle-exclamation"></i> Out of Warranty
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.order.techid %}
+                                <span style="font-weight: 600; color: #1E293B;">{{ item.order.techid.tech_name }}</span>
+                            {% else %}
+                                <span class="badge badge-warning">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.order.loc_type }}</td>
+                        <td class="tabular-num" style="font-weight: 600;">
+                            {% if item.in_warranty %}
+                                <span style="color: var(--status-green);">?0.00 (Free)</span>
+                            {% else %}
+                                ?{{ item.order.Inv_amt|floatformat:2 }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.order.w_stid.W_status == 'Completed' %}
+                                <span class="badge badge-success">{{ item.order.w_stid.W_status }}</span>
+                            {% elif item.order.w_stid.W_status == 'Pending' or item.order.w_stid.W_status == 'Assigned' %}
+                                <span class="badge badge-warning">{{ item.order.w_stid.W_status }}</span>
+                            {% else %}
+                                <span class="badge badge-danger">{{ item.order.w_stid.W_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <a href="{% url 'services:admin_assign_work_order' item.order.W_orderid %}" class="btn btn-primary btn-sm" title="Assign / Set Estimate">
+                                <i class="fa-solid fa-user-pen"></i> Assign
+                            </a>
+                            <a href="{% url 'services:admin_work_order_details' item.order.W_orderid %}" class="btn btn-secondary btn-sm" title="View Full Inspection">
+                                <i class="fa-solid fa-eye"></i> Details
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            No work orders found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

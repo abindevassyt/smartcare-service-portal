@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Consumer Accounts{% endblock %}
+{% block page_title %}Consumer Registration Verification Queue{% endblock %}
+
+{% block content %}
+<div class="kpi-grid" style="margin-bottom: 24px;">
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-amber">
+            <i class="fa-solid fa-user-clock"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ pending_count }}</h3>
+            <p>Pending Verification</p>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-green">
+            <i class="fa-solid fa-user-check"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ active_count }}</h3>
+            <p>Verified & Active</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <h2 class="card-title"><i class="fa-solid fa-users-gear"></i> Consumer Account Registrations</h2>
+        
+        <form method="GET" action="{% url 'accounts:tech_activate_consumers' %}" style="display: flex; gap: 8px; align-items: center;">
+            <select name="status" class="form-control" style="width: auto; padding: 6px 10px;" onchange="this.form.submit()">
+                <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending Verification</option>
+                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active Only</option>
+                <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All Records</option>
+            </select>
+            <input type="text" name="q" value="{{ query }}" placeholder="Search name, email, phone..." class="form-control" style="width: 220px; padding: 6px 12px;">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+            {% if query or status_filter != 'Pending' %}
+                <a href="{% url 'accounts:tech_activate_consumers' %}" class="btn btn-secondary btn-sm">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">ID</th>
+                    <th>Consumer Name</th>
+                    <th>Contact Info</th>
+                    <th>Location</th>
+                    <th>Date of Birth</th>
+                    <th>Registered</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in consumers %}
+                    <tr>
+                        <td class="tabular-num">#{{ c.consumer_id }}</td>
+                        <td>
+                            <strong>{{ c.fname }} {{ c.lname }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ c.consumertype }}</div>
+                        </td>
+                        <td>
+                            <div><i class="fa-regular fa-envelope"></i> {{ c.email }}</div>
+                            <div style="font-size: 12px; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> {{ c.mob }}</div>
+                        </td>
+                        <td>
+                            {{ c.Distid.District }}, {{ c.statid.state }}
+                            <div style="font-size: 11px; color: var(--text-muted);">PIN: {{ c.pin }}</div>
+                        </td>
+                        <td>{{ c.dob|date:"d M Y" }}</td>
+                        <td>{{ c.regdate|date:"d M Y" }}</td>
+                        <td>
+                            {% if c.status == 'Active' %}
+                                <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Active</span>
+                            {% else %}
+                                <span class="badge badge-warning"><i class="fa-solid fa-clock"></i> Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <form method="POST" action="{% url 'accounts:tech_activate_consumer_toggle' c.consumer_id %}" style="display: inline;">
+                                {% csrf_token %}
+                                {% if c.status == 'Pending' %}
+                                    <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Verify and activate consumer account for {{ c.fname }} {{ c.lname }}?');">
+                                        <i class="fa-solid fa-check"></i> Verify & Activate
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Revert {{ c.fname }} {{ c.lname }} status to Pending?');">
+                                        <i class="fa-solid fa-pause"></i> Deactivate
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                            <i class="fa-solid fa-users-slash" style="font-size: 28px; margin-bottom: 8px; display: block;"></i>
+                            No consumer records found matching your filter criteria.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

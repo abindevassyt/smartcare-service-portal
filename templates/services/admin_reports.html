@@ -1,0 +1,482 @@
+{% extends 'base.html' %}
+
+{% block title %}Executive Reports - SmartCare Admin{% endblock %}
+{% block page_title %}Operational & Business Analytics Reports{% endblock %}
+
+{% block content %}
+<!-- Tab Navigation Bar -->
+<div class="card no-print" style="margin-bottom: 20px; padding: 12px 18px;">
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{% url 'services:admin_reports' %}?tab=service_centers" class="btn {% if tab == 'service_centers' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+            <i class="fa-solid fa-building-circle-check"></i> Service Centers Report
+        </a>
+        <a href="{% url 'services:admin_reports' %}?tab=consumers" class="btn {% if tab == 'consumers' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+            <i class="fa-solid fa-users"></i> Consumer Registrations Report
+        </a>
+        <a href="{% url 'services:admin_reports' %}?tab=products" class="btn {% if tab == 'products' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+            <i class="fa-solid fa-certificate"></i> Appliances & Warranty Report
+        </a>
+        <a href="{% url 'services:admin_reports' %}?tab=work_orders" class="btn {% if tab == 'work_orders' %}btn-primary{% else %}btn-secondary{% endif %} btn-sm">
+            <i class="fa-solid fa-file-invoice-dollar"></i> Work Orders & Revenue Report
+        </a>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- 1. SERVICE CENTERS REPORT TAB              -->
+<!-- ========================================== -->
+{% if tab == 'service_centers' %}
+    <div class="kpi-grid" style="margin-bottom: 20px;">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-blue">
+                <i class="fa-solid fa-building"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ total_count }}</h3>
+                <p>Total Service Centers</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-green">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ active_count }}</h3>
+                <p>Active Service Centers</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h2 class="card-title"><i class="fa-solid fa-building-shield"></i> Service Center Network Report</h2>
+
+            <div class="no-print" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <form method="GET" action="{% url 'services:admin_reports' %}" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <input type="hidden" name="tab" value="service_centers">
+                    <select name="statid" class="form-control" style="width: auto; padding: 6px 10px;" onchange="this.form.submit()">
+                        <option value="">-- All States --</option>
+                        {% for s in states %}
+                            <option value="{{ s.statid }}" {% if selected_state == s.statid|stringformat:"s" %}selected{% endif %}>{{ s.state }}</option>
+                        {% endfor %}
+                    </select>
+
+                    {% if districts %}
+                        <select name="Distid" class="form-control" style="width: auto; padding: 6px 10px;" onchange="this.form.submit()">
+                            <option value="">-- All Districts --</option>
+                            {% for d in districts %}
+                                <option value="{{ d.Distid }}" {% if selected_dist == d.Distid|stringformat:"s" %}selected{% endif %}>{{ d.District }}</option>
+                            {% endfor %}
+                        </select>
+                    {% endif %}
+
+                    <select name="status" class="form-control" style="width: auto; padding: 6px 10px;" onchange="this.form.submit()">
+                        <option value="">-- All Statuses --</option>
+                        <option value="Active" {% if selected_status == 'Active' %}selected{% endif %}>Active</option>
+                        <option value="Inactive" {% if selected_status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                </form>
+
+                <a href="{% url 'services:admin_reports' %}?tab=service_centers&export=csv&statid={{ selected_state }}&Distid={{ selected_dist }}&status={{ selected_status }}" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-file-csv"></i> Export CSV
+                </a>
+                <button onclick="window.print()" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-print"></i> Print Report
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>Center Name</th>
+                        <th>Place & Landmark</th>
+                        <th>District & State</th>
+                        <th>PIN</th>
+                        <th>Contact Person</th>
+                        <th>Phone / Mobile</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in report_data %}
+                        <tr>
+                            <td class="tabular-num">#{{ c.serv_centid }}</td>
+                            <td><strong>{{ c.serv_cent }}</strong></td>
+                            <td>{{ c.place }} ({{ c.landmark }})</td>
+                            <td>{{ c.Distid.District }}, {{ c.statid.state }}</td>
+                            <td>{{ c.pin }}</td>
+                            <td>{{ c.Contact_per }}</td>
+                            <td>{{ c.phone }} / {{ c.mob }}</td>
+                            <td><span class="badge badge-success">{{ c.status }}</span></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">No service centers match the filter.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<!-- ========================================== -->
+<!-- 2. CONSUMER REGISTRATIONS REPORT TAB       -->
+<!-- ========================================== -->
+{% elif tab == 'consumers' %}
+    <div class="kpi-grid" style="margin-bottom: 20px;">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-blue">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ total_count }}</h3>
+                <p>Total Consumers</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-green">
+                <i class="fa-solid fa-user-check"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ active_count }}</h3>
+                <p>Active Verified</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-amber">
+                <i class="fa-solid fa-user-clock"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ pending_count }}</h3>
+                <p>Pending Verification</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h2 class="card-title"><i class="fa-solid fa-user-group"></i> Consumer Registrations Registry</h2>
+
+            <div class="no-print" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <form method="GET" action="{% url 'services:admin_reports' %}" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <input type="hidden" name="tab" value="consumers">
+                    <input type="date" name="from_date" value="{{ from_date }}" class="form-control" style="width: auto; padding: 6px 10px;">
+                    <input type="date" name="to_date" value="{{ to_date }}" class="form-control" style="width: auto; padding: 6px 10px;">
+                    <select name="statid" class="form-control" style="width: auto; padding: 6px 10px;">
+                        <option value="">-- All States --</option>
+                        {% for s in states %}
+                            <option value="{{ s.statid }}" {% if selected_state == s.statid|stringformat:"s" %}selected{% endif %}>{{ s.state }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="status" class="form-control" style="width: auto; padding: 6px 10px;">
+                        <option value="">-- Status --</option>
+                        <option value="Active" {% if selected_status == 'Active' %}selected{% endif %}>Active</option>
+                        <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-filter"></i></button>
+                </form>
+
+                <a href="{% url 'services:admin_reports' %}?tab=consumers&export=csv&from_date={{ from_date }}&to_date={{ to_date }}&statid={{ selected_state }}&status={{ selected_status }}" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-file-csv"></i> Export CSV
+                </a>
+                <button onclick="window.print()" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-print"></i> Print Report
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">ID</th>
+                        <th>Consumer Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>District & State</th>
+                        <th>Registered Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in report_data %}
+                        <tr>
+                            <td class="tabular-num">#{{ c.consumer_id }}</td>
+                            <td><strong>{{ c.fname }} {{ c.lname }}</strong></td>
+                            <td>{{ c.email }}</td>
+                            <td>{{ c.mob }}</td>
+                            <td>{{ c.Distid.District }}, {{ c.statid.state }}</td>
+                            <td>{{ c.regdate|date:"d M Y" }}</td>
+                            <td>
+                                {% if c.status == 'Active' %}
+                                    <span class="badge badge-success">Active</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No consumers match the filter.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<!-- ========================================== -->
+<!-- 3. APPLIANCES & WARRANTY REPORT TAB        -->
+<!-- ========================================== -->
+{% elif tab == 'products' %}
+    <div class="kpi-grid" style="margin-bottom: 20px;">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-blue">
+                <i class="fa-solid fa-tv"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ total_count }}</h3>
+                <p>Registered Appliances</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-green">
+                <i class="fa-solid fa-shield"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ in_warnt_count }}</h3>
+                <p>Under Active Warranty</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-amber">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ total_count|add:"-"|add:in_warnt_count }}</h3>
+                <p>Expired Warranty</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h2 class="card-title"><i class="fa-solid fa-barcode"></i> Consumer Product Registrations & Warranty Status</h2>
+
+            <div class="no-print" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <form method="GET" action="{% url 'services:admin_reports' %}" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <input type="hidden" name="tab" value="products">
+                    <select name="pcatid" class="form-control" style="width: auto; padding: 6px 10px;">
+                        <option value="">-- All Categories --</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.pcatid }}" {% if selected_cat == cat.pcatid|stringformat:"s" %}selected{% endif %}>{{ cat.category }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="status" class="form-control" style="width: auto; padding: 6px 10px;">
+                        <option value="">-- Activation --</option>
+                        <option value="Active" {% if selected_status == 'Active' %}selected{% endif %}>Active</option>
+                        <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+                    </select>
+
+                    <select name="warranty" class="form-control" style="width: auto; padding: 6px 10px;">
+                        <option value="">-- Warranty --</option>
+                        <option value="In Warranty" {% if selected_warranty == 'In Warranty' %}selected{% endif %}>In Warranty</option>
+                        <option value="Expired" {% if selected_warranty == 'Expired' %}selected{% endif %}>Expired</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-filter"></i></button>
+                </form>
+
+                <a href="{% url 'services:admin_reports' %}?tab=products&export=csv&pcatid={{ selected_cat }}&status={{ selected_status }}&warranty={{ selected_warranty }}" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-file-csv"></i> Export CSV
+                </a>
+                <button onclick="window.print()" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-print"></i> Print Report
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Reg ID</th>
+                        <th>Consumer</th>
+                        <th>Product & Model</th>
+                        <th>Serial No</th>
+                        <th>Invoice No</th>
+                        <th>Warranty Expiration</th>
+                        <th>Warranty Coverage</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in appliance_data %}
+                        <tr>
+                            <td class="tabular-num">#{{ item.app.Reg_id }}</td>
+                            <td>
+                                <strong>{{ item.app.consumer_id.fname }} {{ item.app.consumer_id.lname }}</strong>
+                                <div style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> {{ item.app.consumer_id.mob }}</div>
+                            </td>
+                            <td>
+                                <strong>{{ item.app.prid.prname }}</strong>
+                                <div style="font-size: 11px; color: var(--text-muted);">{{ item.app.prid.model }} ({{ item.app.prid.pcatid.category }})</div>
+                            </td>
+                            <td><code>{{ item.app.prod_no }}</code></td>
+                            <td>#{{ item.app.Invoice_no }}</td>
+                            <td>{{ item.app.warnt_enddate|date:"d M Y" }}</td>
+                            <td>
+                                {% if item.in_warranty %}
+                                    <span class="badge badge-success"><i class="fa-solid fa-shield"></i> In Warranty</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Expired</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.app.Isactive == 'Active' %}
+                                    <span class="badge badge-success">Active</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">No appliances match the filter.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+<!-- ========================================== -->
+<!-- 4. WORK ORDERS & REVENUE REPORT TAB        -->
+<!-- ========================================== -->
+{% else %}
+    <div class="kpi-grid" style="margin-bottom: 20px;">
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-blue">
+                <i class="fa-solid fa-list-check"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ total_count }}</h3>
+                <p>Total Work Orders</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-green">
+                <i class="fa-solid fa-check-double"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ completed_count }}</h3>
+                <p>Completed Tickets</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-amber">
+                <i class="fa-solid fa-clock"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>{{ pending_count }}</h3>
+                <p>Pending Tickets</p>
+            </div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-icon-wrap kpi-icon-purple">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
+            <div class="kpi-info">
+                <h3>₹{{ total_revenue|floatformat:2 }}</h3>
+                <p>Invoiced Service Revenue</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <h2 class="card-title"><i class="fa-solid fa-chart-line"></i> Work Order Lifecycle & Invoiced Revenue Report</h2>
+
+            <div class="no-print" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <form method="GET" action="{% url 'services:admin_reports' %}" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <input type="hidden" name="tab" value="work_orders">
+                    <input type="date" name="from_date" value="{{ from_date }}" class="form-control" style="width: auto; padding: 6px 10px;">
+                    <input type="date" name="to_date" value="{{ to_date }}" class="form-control" style="width: auto; padding: 6px 10px;">
+
+                    <select name="techid" class="form-control" style="width: auto; padding: 6px 10px;">
+                        <option value="">-- All Technicians --</option>
+                        {% for t in technicians %}
+                            <option value="{{ t.techid }}" {% if selected_tech == t.techid|stringformat:"s" %}selected{% endif %}>{{ t.tech_name }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="w_stid" class="form-control" style="width: auto; padding: 6px 10px;">
+                        <option value="">-- Status --</option>
+                        {% for s in statuses %}
+                            <option value="{{ s.Wo_stid }}" {% if selected_status == s.Wo_stid|stringformat:"s" %}selected{% endif %}>{{ s.W_status }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="loc_type" class="form-control" style="width: auto; padding: 6px 10px;">
+                        <option value="">-- Location --</option>
+                        <option value="Home Service" {% if selected_loc == 'Home Service' %}selected{% endif %}>Home Service</option>
+                        <option value="Service Center Visit" {% if selected_loc == 'Service Center Visit' %}selected{% endif %}>Service Center Visit</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-filter"></i></button>
+                </form>
+
+                <a href="{% url 'services:admin_reports' %}?tab=work_orders&export=csv&from_date={{ from_date }}&to_date={{ to_date }}&techid={{ selected_tech }}&w_stid={{ selected_status }}&loc_type={{ selected_loc }}" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-file-csv"></i> Export CSV
+                </a>
+                <button onclick="window.print()" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-print"></i> Print Report
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">WO ID</th>
+                        <th>Req No</th>
+                        <th>Consumer</th>
+                        <th>Appliance</th>
+                        <th>Technician</th>
+                        <th>Location</th>
+                        <th>Created</th>
+                        <th>Closed</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in report_data %}
+                        <tr>
+                            <td class="tabular-num">#{{ o.W_orderid }}</td>
+                            <td class="tabular-num"><strong>#{{ o.Serv_req_no }}</strong></td>
+                            <td>{{ o.reg_id.consumer_id.fname }} {{ o.reg_id.consumer_id.lname }}</td>
+                            <td>{{ o.reg_id.prid.prname }}</td>
+                            <td>{{ o.techid.tech_name|default:"Unassigned" }}</td>
+                            <td>{{ o.loc_type }}</td>
+                            <td>{{ o.cre_date|date:"d M Y" }}</td>
+                            <td>{{ o.close_date|date:"d M Y"|default:"-" }}</td>
+                            <td>
+                                {% if o.w_stid.W_status == 'Completed' %}
+                                    <span class="badge badge-success">{{ o.w_stid.W_status }}</span>
+                                {% elif o.w_stid.W_status == 'In Progress' %}
+                                    <span class="badge badge-warning">{{ o.w_stid.W_status }}</span>
+                                {% else %}
+                                    <span class="badge badge-info">{{ o.w_stid.W_status }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="tabular-num" style="text-align: right; font-weight: 700;">₹{{ o.Inv_amt|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px;">No work orders match the filter.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

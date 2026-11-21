@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Consumer Dashboard{% endblock %}
+{% block page_title %}My Appliances & Service Requests{% endblock %}
+
+{% block content %}
+<!-- KPI Overview Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-blue">
+            <i class="fa-solid fa-tv"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ registered_appliances|length }}</h3>
+            <p>Registered Appliances</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-amber">
+            <i class="fa-solid fa-wrench"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ active_tickets_count }}</h3>
+            <p>Active Service Tickets</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-red">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ expiring_soon_count }}</h3>
+            <p>Expiring Warranty (<=30d)</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-green">
+            <i class="fa-solid fa-user-check"></i>
+        </div>
+        <div class="kpi-info">
+            <h3 style="font-size: 20px;">{{ consumer.status|default:'Active' }}</h3>
+            <p>Account Status</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Shortcuts -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-bolt"></i> Consumer Quick Actions</h2>
+    </div>
+    <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+        <a href="{% url 'services:consumer_register_product' %}" class="btn btn-primary">
+            <i class="fa-solid fa-circle-plus"></i> Register Appliance
+        </a>
+        <a href="{% url 'services:consumer_book_service' %}" class="btn btn-primary">
+            <i class="fa-solid fa-screwdriver-wrench"></i> Book Repair Service
+        </a>
+        <a href="{% url 'services:consumer_track_orders' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-route"></i> Track My Tickets ({{ work_orders|length }})
+        </a>
+        <a href="{% url 'accounts:consumer_service_centers' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-building-circle-check"></i> Find Service Centers
+        </a>
+        <a href="{% url 'services:consumer_complaints' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-headset"></i> Support Desk
+        </a>
+    </div>
+</div>
+
+<!-- Active Service Requests -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-route"></i> Ongoing Repair & Service Tickets</h2>
+        <a href="{% url 'services:consumer_track_orders' %}" class="btn btn-secondary btn-sm">View All Tickets</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>WO ID</th>
+                    <th>Req No</th>
+                    <th>Appliance</th>
+                    <th>Technician</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in work_orders %}
+                    <tr>
+                        <td class="tabular-num">#{{ order.W_orderid }}</td>
+                        <td class="tabular-num"><strong>#{{ order.Serv_req_no }}</strong></td>
+                        <td>{{ order.reg_id.prid.prname }}</td>
+                        <td>{{ order.techid.tech_name|default:'Pending Assignment' }}</td>
+                        <td>{{ order.loc_type }}</td>
+                        <td>
+                            {% if order.w_stid.W_status == 'Completed' %}
+                                <span class="badge badge-success">{{ order.w_stid.W_status }}</span>
+                            {% elif order.w_stid.W_status == 'Cancelled' or order.w_stid.W_status == 'Irreparable' %}
+                                <span class="badge badge-danger">{{ order.w_stid.W_status }}</span>
+                            {% else %}
+                                <span class="badge badge-warning">{{ order.w_stid.W_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'services:consumer_track_order_detail' order.W_orderid %}" class="btn btn-primary btn-sm">
+                                Track
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            No active repair tickets currently open.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Registered Appliances Table -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-boxes-stacked"></i> My Appliances & Warranty Status</h2>
+        <a href="{% url 'services:consumer_register_product' %}" class="btn btn-secondary btn-sm">Register Another</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Reg ID</th>
+                    <th>Product</th>
+                    <th>Serial No</th>
+                    <th>Warranty Card</th>
+                    <th>Invoice Date</th>
+                    <th>Warranty Expiry</th>
+                    <th>Warranty</th>
+                    <th>Activation Gate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in registered_appliances %}
+                    <tr>
+                        <td class="tabular-num">#{{ item.app.Reg_id }}</td>
+                        <td><strong>{{ item.app.prid.prname }}</strong> ({{ item.app.prid.model }})</td>
+                        <td class="tabular-num"><code>{{ item.app.prod_no }}</code></td>
+                        <td class="tabular-num">{{ item.app.warnt_cardno }}</td>
+                        <td>{{ item.app.Invoice_date|date:"d M Y" }}</td>
+                        <td>{{ item.app.warnt_enddate|date:"d M Y" }}</td>
+                        <td>
+                            {% if item.is_warranty_valid %}
+                                <span class="badge badge-success"><i class="fa-solid fa-shield"></i> Valid ({{ item.days_left }}d left)</span>
+                            {% else %}
+                                <span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Expired</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.app.Isactive == 'Active' %}
+                                <span class="badge badge-success">Verified</span>
+                            {% else %}
+                                <span class="badge badge-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                            <i class="fa-solid fa-box-open" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                            You have not registered any appliances yet. Click <strong>"Register Appliance"</strong> above to register your electronic products.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

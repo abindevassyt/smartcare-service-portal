@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Invoice #{{ invoice.Invoice_id }} - SmartCare Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-navy: #0F172A;
+            --accent-blue: #0284C7;
+            --border-color: #E2E8F0;
+            --text-dark: #1E293B;
+            --text-muted: #64748B;
+            --bg-light: #F8FAFC;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        body {
+            background-color: #F1F5F9;
+            color: var(--text-dark);
+            padding: 24px;
+        }
+        .invoice-wrapper {
+            max-width: 820px;
+            margin: 0 auto;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 40px;
+        }
+        .no-print-bar {
+            max-width: 820px;
+            margin: 0 auto 16px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            border: none;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--accent-blue);
+            color: #FFFFFF;
+        }
+        .btn-primary:hover {
+            background: #0369A1;
+        }
+        .btn-secondary {
+            background: #E2E8F0;
+            color: #334155;
+        }
+        .btn-secondary:hover {
+            background: #CBD5E1;
+        }
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid var(--primary-navy);
+            padding-bottom: 20px;
+            margin-bottom: 24px;
+        }
+        .brand-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary-navy);
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .brand-title i {
+            color: var(--accent-blue);
+        }
+        .center-details {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            line-height: 1.5;
+        }
+        .doc-title-block {
+            text-align: right;
+        }
+        .doc-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary-navy);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .invoice-meta {
+            font-size: 13px;
+            margin-top: 6px;
+            line-height: 1.6;
+        }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            background: var(--bg-light);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+        }
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 4px;
+        }
+        .meta-text {
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .table-data {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+        }
+        .table-data th {
+            background: var(--primary-navy);
+            color: #FFFFFF;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 10px 12px;
+            text-align: left;
+        }
+        .table-data td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+        }
+        .table-data tr:nth-child(even) {
+            background-color: var(--bg-light);
+        }
+        .text-right {
+            text-align: right;
+        }
+        .summary-block {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 24px;
+        }
+        .summary-table {
+            width: 340px;
+            border-collapse: collapse;
+        }
+        .summary-table td {
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+        .summary-table .grand-total {
+            border-top: 2px solid var(--primary-navy);
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary-navy);
+            padding-top: 10px;
+        }
+        .seal-badge {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 20px;
+        }
+        .seal-warranty {
+            background: #DCFCE7;
+            color: #166534;
+            border: 1px solid #86EFAC;
+        }
+        .seal-paid {
+            background: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #BFDBFE;
+        }
+        .seal-zero {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FCA5A5;
+        }
+        .signatures-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+        .sig-box {
+            text-align: center;
+        }
+        .sig-line {
+            height: 50px;
+            border-bottom: 1px solid var(--text-dark);
+            margin-bottom: 8px;
+        }
+        .sig-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .invoice-footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.5;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 14px;
+        }
+        @media print {
+            body {
+                background: #FFFFFF;
+                padding: 0;
+            }
+            .invoice-wrapper {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- On-Screen Utility Bar -->
+    <div class="no-print-bar no-print">
+        <a href="javascript:history.back()" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Portal
+        </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="fa-solid fa-print"></i> Print Official Invoice / Save PDF
+        </button>
+    </div>
+
+    <!-- Main Printable Invoice Document -->
+    <div class="invoice-wrapper">
+        <div class="invoice-header">
+            <div>
+                <div class="brand-title">
+                    <i class="fa-solid fa-screwdriver-wrench"></i> SmartCare
+                </div>
+                <div class="center-details">
+                    <strong>SmartCare Electronics Authorized Service Center</strong><br>
+                    {% if center %}
+                        {{ center.place }}, {{ center.landmark }}<br>
+                        {{ center.Distid.District }}, {{ center.statid.state }} - {{ center.pin }}<br>
+                        Phone: {{ center.phone }} | Mobile: {{ center.mob }}<br>
+                        Email: {{ center.email }}
+                    {% else %}
+                        Central Electronics Service Complex, Aluva, Kochi, Kerala - 683101<br>
+                        Ph: +91 484 223344 | Email: service@smartcare.portal
+                    {% endif %}
+                    <br>GSTIN/TAX: 32AABCS1429B1Z2
+                </div>
+            </div>
+
+            <div class="doc-title-block">
+                <div class="doc-title">Tax Invoice & Service Receipt</div>
+                <div class="invoice-meta">
+                    <strong>Invoice #:</strong> INV-{{ invoice.Invoice_id|stringformat:"05d" }}<br>
+                    <strong>Invoice Date:</strong> {{ invoice.Inv_date|date:"d M Y" }}<br>
+                    <strong>Work Order ID:</strong> #{{ order.W_orderid }}<br>
+                    <strong>Service Req No:</strong> #{{ order.Serv_req_no }}<br>
+                    <strong>Jobsheet Type:</strong> {{ order.jobsheet_type }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Metadata Grid -->
+        <div class="meta-grid">
+            <div>
+                <div class="section-label">Customer Details (Billed To)</div>
+                <div class="meta-text">
+                    <strong>{{ consumer.fname }} {{ consumer.lname }}</strong><br>
+                    {{ consumer.address }}<br>
+                    {{ consumer.Distid.District }}, {{ consumer.statid.state }} - {{ consumer.pin }}<br>
+                    Mobile: {{ consumer.mob }} | Phone: {{ consumer.phone }}<br>
+                    Email: {{ consumer.email }}
+                </div>
+            </div>
+
+            <div>
+                <div class="section-label">Appliance & Service Details</div>
+                <div class="meta-text">
+                    <strong>{{ order.reg_id.prid.prname }}</strong> ({{ order.reg_id.prid.pcatid.category }})<br>
+                    Model: <code>{{ order.reg_id.prid.model }}</code> | S/N: <strong>{{ order.prod_no }}</strong><br>
+                    Warranty Card #: #{{ order.reg_id.warnt_cardno }} | Purchase Inv: #{{ order.reg_id.Invoice_no }}<br>
+                    Service Location: {{ order.loc_type }} ({{ order.calltype }})<br>
+                    Assigned Tech: <strong>{{ order.techid.tech_name|default:"Field Service Engineer" }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warranty Status Seal Banner -->
+        <div>
+            {% if in_warranty %}
+                <div class="seal-badge seal-warranty">
+                    <i class="fa-solid fa-shield-halved"></i> 100% Manufacturer Warranty Coverage (Zero Customer Charge)
+                </div>
+            {% elif invoice.Amount == 0.0 %}
+                <div class="seal-badge seal-zero">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Out-of-Warranty Irreparable — Closed at ₹0.00 Per Policy
+                </div>
+            {% else %}
+                <div class="seal-badge seal-paid">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Out-of-Warranty Paid Service
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Diagnostic Observations -->
+        {% if defects %}
+            <div style="margin-bottom: 20px;">
+                <div class="section-label">Diagnostic Findings & Resolution</div>
+                {% for d in defects %}
+                    <div style="font-size: 13px; margin-bottom: 4px;">
+                        • <strong>{{ d.defect_bytech }}</strong>: {{ d.defect_des }} (Repair: {{ d.Actual_rep }} | Status: {{ d.Status }})
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Itemized Spare Parts Table -->
+        <table class="table-data">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">Item</th>
+                    <th>Spare Part Description</th>
+                    <th>Section / Position</th>
+                    <th class="text-right">Unit Rate (₹)</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in parts_breakdown %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><strong>{{ p.part_name }}</strong></td>
+                        <td>{{ p.section }} ({{ p.position }})</td>
+                        <td class="text-right">{{ p.price|floatformat:2 }}</td>
+                        <td class="text-right">{{ p.qty }}</td>
+                        <td class="text-right">{{ p.subtotal|floatformat:2 }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 14px;">
+                            No replacement spare parts required. Pure labor / diagnostic servicing.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Summary & Totals Block -->
+        <div class="summary-block">
+            <table class="summary-table">
+                <tr>
+                    <td>Spare Parts Total:</td>
+                    <td class="text-right">₹{{ parts_total|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <td>Technician Labor & Service Fee:</td>
+                    <td class="text-right">₹{{ labor_charge|floatformat:2 }}</td>
+                </tr>
+                {% if in_warranty %}
+                    <tr style="color: #16A34A; font-weight: 600;">
+                        <td>Warranty Coverage Waiver (100%):</td>
+                        <td class="text-right">-₹{{ warranty_discount|floatformat:2 }}</td>
+                    </tr>
+                {% endif %}
+                <tr class="grand-total">
+                    <td>Grand Total Payable:</td>
+                    <td class="text-right">₹{{ invoice.Amount|floatformat:2 }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Declarations & Signatures -->
+        <div class="signatures-grid">
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div class="sig-label">Customer Signature & Acceptance</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                    Appliance received in good working condition.
+                </div>
+            </div>
+
+            <div class="sig-box">
+                <div class="sig-line"></div>
+                <div class="sig-label">Authorized Signatory / Service Stamp</div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                    SmartCare Portal Certified Engineer
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="invoice-footer">
+            Thank you for trusting SmartCare Electronics Service Portal.<br>
+            All replacement parts carry a 90-day warranty from the date of invoice. Electronic computer-generated document, valid without physical seal.<br>
+            <strong>Project Reference:</strong> SmartCare Service Portal (MCSP-232) | IGNOU MCA 2026 | Developer: Abin Devassy Tharayil
+        </div>
+    </div>
+
+</body>
+</html>

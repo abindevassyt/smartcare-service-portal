@@ -1,0 +1,189 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consumer Registration - SmartCare Service Portal</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="auth-wrapper" style="padding: 40px 20px;">
+        <div class="auth-card auth-card-wide">
+            <div class="auth-card-header">
+                <div style="font-size: 32px; margin-bottom: 6px; color: #38BDF8;">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <h2>Create Consumer Account</h2>
+                <p>Register for SmartCare Electronic Product Servicing & Warranty Care</p>
+            </div>
+
+            <div class="auth-card-body">
+                {% if messages %}
+                    <div class="alert-container">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }}">
+                                <span>
+                                    {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check"></i>
+                                    {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="fa-solid fa-circle-exclamation"></i>
+                                    {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>
+                                    {% else %}<i class="fa-solid fa-circle-info"></i>{% endif %}
+                                    {{ message }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="{% url 'accounts:register' %}" id="regForm">
+                    {% csrf_token %}
+
+                    <div style="font-weight: 700; color: var(--primary-navy); margin-bottom: 14px; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">
+                        <i class="fa-solid fa-id-card"></i> 1. Personal Details
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="fname">First Name *</label>
+                            <input type="text" id="fname" name="fname" class="form-control" placeholder="e.g. Rahul" value="{{ form_data.fname|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="lname">Last Name *</label>
+                            <input type="text" id="lname" name="lname" class="form-control" placeholder="e.g. Sharma" value="{{ form_data.lname|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="dob">Date of Birth *</label>
+                            <input type="date" id="dob" name="dob" class="form-control" value="{{ form_data.dob|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="consumertype">Consumer Type</label>
+                            <select id="consumertype" name="consumertype" class="form-control">
+                                <option value="Regular" {% if form_data.consumertype == 'Regular' %}selected{% endif %}>Regular (Home Consumer)</option>
+                                <option value="Commercial" {% if form_data.consumertype == 'Commercial' %}selected{% endif %}>Commercial / Business</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="font-weight: 700; color: var(--primary-navy); margin: 20px 0 14px 0; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">
+                        <i class="fa-solid fa-location-dot"></i> 2. Contact & Address Details
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label" for="address">Address *</label>
+                            <input type="text" id="address" name="address" class="form-control" placeholder="House / Flat No., Street, Landmark" value="{{ form_data.address|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="statid">State *</label>
+                            <select id="statid" name="statid" class="form-control" required>
+                                <option value="">-- Select State --</option>
+                                {% for state in states %}
+                                    <option value="{{ state.statid }}" {% if form_data.statid == state.statid|stringformat:'i' %}selected{% endif %}>{{ state.state }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="Distid">District *</label>
+                            <select id="Distid" name="Distid" class="form-control" required>
+                                <option value="">-- Select State First --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="pin">PIN Code *</label>
+                            <input type="text" id="pin" name="pin" class="form-control" placeholder="6-digit PIN" maxlength="8" value="{{ form_data.pin|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="mob">Mobile Number *</label>
+                            <input type="tel" id="mob" name="mob" class="form-control" placeholder="10-digit mobile" maxlength="15" value="{{ form_data.mob|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="phone">Alternative Phone / Landline</label>
+                            <input type="tel" id="phone" name="phone" class="form-control" placeholder="Alternative contact" maxlength="20" value="{{ form_data.phone|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div style="font-weight: 700; color: var(--primary-navy); margin: 20px 0 14px 0; border-bottom: 2px solid #E2E8F0; padding-bottom: 6px;">
+                        <i class="fa-solid fa-lock"></i> 3. Login Credentials
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label" for="email">Email Address (This will be your Username) *</label>
+                            <input type="email" id="email" name="email" class="form-control" placeholder="consumer@example.com" value="{{ form_data.email|default:'' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="password">Password *</label>
+                            <input type="password" id="password" name="password" class="form-control" placeholder="Create secure password" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="confirm_password">Confirm Password *</label>
+                            <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Re-enter password" required>
+                        </div>
+                        <div class="form-group" style="grid-column: 1 / -1;">
+                            <label class="form-label" for="remarks">Remarks / Special Notes</label>
+                            <input type="text" id="remarks" name="remarks" class="form-control" placeholder="Optional remarks" value="{{ form_data.remarks|default:'' }}">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px; display: flex; gap: 14px; align-items: center;">
+                        <button type="submit" class="btn btn-primary" style="flex: 1; padding: 12px; font-size: 15px;">
+                            <i class="fa-solid fa-user-check"></i> Complete Registration
+                        </button>
+                        <a href="{% url 'accounts:login' %}" class="btn btn-secondary" style="padding: 12px 20px;">
+                            Cancel & Sign In
+                        </a>
+                    </div>
+                </form>
+
+                <div style="text-align: center; margin-top: 20px; font-size: 13px; color: var(--text-muted);">
+                    Already have an account? <a href="{% url 'accounts:login' %}" style="font-weight: 600; color: var(--accent-cyan);">Sign In here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vanilla JS Dynamic District Loader -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const stateSelect = document.getElementById('statid');
+            const distSelect = document.getElementById('Distid');
+            const preselectedDist = "{{ form_data.Distid|default:'' }}";
+
+            function loadDistricts(statid, selectedDistId) {
+                if (!statid) {
+                    distSelect.innerHTML = '<option value="">-- Select State First --</option>';
+                    return;
+                }
+
+                distSelect.innerHTML = '<option value="">Loading districts...</option>';
+
+                fetch(/api/districts//)
+                    .then(response => response.json())
+                    .then(data => {
+                        distSelect.innerHTML = '<option value="">-- Select District --</option>';
+                        data.districts.forEach(d => {
+                            const opt = document.createElement('option');
+                            opt.value = d.id;
+                            opt.textContent = d.name;
+                            if (selectedDistId && String(d.id) === String(selectedDistId)) {
+                                opt.selected = true;
+                            }
+                            distSelect.appendChild(opt);
+                        });
+                    })
+                    .catch(err => {
+                        console.error('Error fetching districts:', err);
+                        distSelect.innerHTML = '<option value="">Failed to load districts</option>';
+                    });
+            }
+
+            stateSelect.addEventListener('change', function() {
+                loadDistricts(this.value, null);
+            });
+
+            // Trigger on page load if a state was already selected (e.g. after validation error)
+            if (stateSelect.value) {
+                loadDistricts(stateSelect.value, preselectedDist);
+            }
+        });
+    </script>
+</body>
+</html>

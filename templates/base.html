@@ -1,0 +1,282 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %} - SmartCare Service Portal</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <aside class="app-sidebar no-print">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                </div>
+                <div class="brand-text">
+                    <h2>SmartCare</h2>
+                    <p>Service Portal (MCSP-232)</p>
+                </div>
+            </div>
+
+            <div class="sidebar-role-indicator">
+                <span style="font-size: 11px; color: #94A3B8;">Role:</span>
+                <span class="role-badge-pill role-badge-{{ session_role|default:'Guest' }}">
+                    <i class="fa-solid fa-shield-halved"></i> {{ session_role|default:'Guest' }}
+                </span>
+            </div>
+
+            <ul class="sidebar-menu">
+                {% if session_role == 'Admin' %}
+                    <li class="menu-header">Overview</li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:admin_dashboard' %}" class="menu-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-chart-line"></i></span>
+                            <span>Admin Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-header">Master Data Management</li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:manage_states' %}" class="menu-link {% if 'states' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-map-location-dot"></i></span>
+                            <span>States & Districts</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:manage_service_centers' %}" class="menu-link {% if 'service-centers' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-building-shield"></i></span>
+                            <span>Service Centers</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'products:manage_categories' %}" class="menu-link {% if 'categories' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-tags"></i></span>
+                            <span>Product Categories</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'products:manage_products' %}" class="menu-link {% if request.resolver_match.url_name == 'manage_products' %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-tv"></i></span>
+                            <span>Products Catalog</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'products:manage_spare_parts' %}" class="menu-link {% if 'spare-parts' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-gears"></i></span>
+                            <span>Spare Parts Inventory</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:manage_statuses' %}" class="menu-link {% if 'statuses' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-list-check"></i></span>
+                            <span>Work Statuses</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:manage_technicians' %}" class="menu-link {% if 'technicians' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-user-gear"></i></span>
+                            <span>Technicians</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-header">Service Operations</li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:admin_consumers' %}" class="menu-link {% if 'admin/consumers' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-users"></i></span>
+                            <span>Consumers List</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:admin_consumer_products' %}" class="menu-link {% if 'admin/consumer-products' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-box-open"></i></span>
+                            <span>Registered Appliances</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:admin_work_orders' %}" class="menu-link {% if 'admin/work-orders' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-file-invoice"></i></span>
+                            <span>Work Orders & Assign</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:admin_complaints' %}" class="menu-link {% if 'admin/complaints' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-comments"></i></span>
+                            <span>Portal Complaints</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:admin_reports' %}" class="menu-link {% if 'reports' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-chart-pie"></i></span>
+                            <span>Admin Reports</span>
+                        </a>
+                    </li>
+
+                {% elif session_role == 'Technician' %}
+                    <li class="menu-header">Workspace</li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:tech_dashboard' %}" class="menu-link {% if request.resolver_match.url_name == 'tech_dashboard' %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-clipboard-list"></i></span>
+                            <span>Technician Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-header">Activation Queues</li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:tech_activate_consumers' %}" class="menu-link {% if 'activate-consumers' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-user-check"></i></span>
+                            <span>Activate Consumers</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:tech_activate_products' %}" class="menu-link {% if 'activate-products' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-certificate"></i></span>
+                            <span>Verify Appliances</span>
+                        </a>
+                    </li>
+
+                    <li class="menu-header">References</li>
+                    <li class="menu-item">
+                        <a href="{% url 'products:tech_products' %}" class="menu-link {% if 'tech/products' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-tv"></i></span>
+                            <span>Products Catalog</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'products:tech_spare_parts' %}" class="menu-link {% if 'tech/spare-parts' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-gears"></i></span>
+                            <span>Spare Parts Stock</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:tech_service_centers' %}" class="menu-link {% if 'tech/service-centers' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-building-circle-check"></i></span>
+                            <span>Service Centers</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:tech_technicians' %}" class="menu-link {% if 'tech/technicians' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-id-badge"></i></span>
+                            <span>Technician Directory</span>
+                        </a>
+                    </li>
+
+                {% elif session_role == 'Consumer' %}
+                    <li class="menu-header">My Services</li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:consumer_dashboard' %}" class="menu-link {% if request.resolver_match.url_name == 'consumer_dashboard' %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-house"></i></span>
+                            <span>Consumer Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:consumer_profile' %}" class="menu-link {% if 'profile' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-address-card"></i></span>
+                            <span>My Profile</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:consumer_register_product' %}" class="menu-link {% if 'consumer/products' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-circle-plus"></i></span>
+                            <span>Register Appliance</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:consumer_book_service' %}" class="menu-link {% if 'book-service' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-wrench"></i></span>
+                            <span>Book Repair Service</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:consumer_track_orders' %}" class="menu-link {% if 'track-orders' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-route"></i></span>
+                            <span>Track Work Orders</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:consumer_history' %}" class="menu-link {% if 'history' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                            <span>Transaction History</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'products:consumer_catalog' %}" class="menu-link {% if 'consumer/catalog' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-boxes-stacked"></i></span>
+                            <span>Products Catalog</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'accounts:consumer_service_centers' %}" class="menu-link {% if 'consumer/service-centers' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-map-pin"></i></span>
+                            <span>Find Service Centers</span>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{% url 'services:consumer_complaints' %}" class="menu-link {% if 'consumer/complaints' in request.path %}active{% endif %}">
+                            <span class="menu-icon"><i class="fa-solid fa-headset"></i></span>
+                            <span>Complaints & Support</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="app-main">
+            <!-- TOP HEADER -->
+            <header class="app-header no-print">
+                <div class="header-title">
+                    <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                </div>
+
+                <div class="header-user-section">
+                    <div class="header-user-info">
+                        <div class="header-username">
+                            <i class="fa-regular fa-user"></i> {{ session_username|default:'Guest' }}
+                        </div>
+                        <div class="header-user-role">
+                            {{ session_role|default:'Not Logged In' }}
+                        </div>
+                    </div>
+                    {% if is_authenticated_custom %}
+                        <a href="{% url 'accounts:logout' %}" class="btn-logout">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                        </a>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}" class="btn btn-primary btn-sm">
+                            <i class="fa-solid fa-right-to-bracket"></i> Login
+                        </a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- CANVAS -->
+            <main class="app-content">
+                {% if messages %}
+                    <div class="alert-container no-print">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags|default:'info' }}">
+                                <span>
+                                    {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check"></i>
+                                    {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="fa-solid fa-circle-exclamation"></i>
+                                    {% elif message.tags == 'warning' %}<i class="fa-solid fa-triangle-exclamation"></i>
+                                    {% else %}<i class="fa-solid fa-circle-info"></i>{% endif %}
+                                    {{ message }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

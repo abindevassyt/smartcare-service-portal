@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Generate Invoice - Work Order #{{ order.W_orderid }}{% endblock %}
+{% block page_title %}Automated Invoice Generation Engine{% endblock %}
+
+{% block content %}
+<div style="max-width: 860px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <span style="font-size: 13px; color: var(--text-muted);">Work Order ID:</span>
+            <strong style="font-size: 18px; color: var(--primary-navy);">#{{ order.W_orderid }}</strong>
+            <span style="margin-left: 10px;">(Service Req: #{{ order.Serv_req_no }})</span>
+        </div>
+        <a href="{% url 'services:tech_work_order_detail' order.W_orderid %}" class="btn btn-secondary btn-sm">
+            <i class="fa-solid fa-arrow-left"></i> Back to Workspace
+        </a>
+    </div>
+
+    <!-- Rule Evaluation Alert Banner -->
+    {% if in_warranty %}
+        <div style="background: #DCFCE7; border: 1px solid #86EFAC; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                <i class="fa-solid fa-shield-halved" style="font-size: 28px; color: #16A34A; margin-top: 2px;"></i>
+                <div>
+                    <h3 style="color: #14532D; font-size: 16px; font-weight: 700; margin-bottom: 4px;">
+                        RULE 1 APPLIED: In-Warranty Service Coverage
+                    </h3>
+                    <p style="font-size: 13px; color: #166534; margin: 0;">
+                        Work order created on <strong>{{ order.cre_date|date:"d M Y" }}</strong> is within warranty (valid until <strong>{{ order.reg_id.warnt_enddate|date:"d M Y" }}</strong>).<br>
+                        <strong>Billing Rule:</strong> Total invoice amount is <strong>₹0.00</strong>. If marked Irreparable, this work order is automatically escalated for <strong>Warranty Product Replacement</strong>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+            <div style="display: flex; gap: 14px; align-items: flex-start;">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 28px; color: #D97706; margin-top: 2px;"></i>
+                <div>
+                    <h3 style="color: #92400E; font-size: 16px; font-weight: 700; margin-bottom: 4px;">
+                        OUT-OF-WARRANTY BILLING RULES
+                    </h3>
+                    <p style="font-size: 13px; color: #78350F; margin: 0;">
+                        Appliance warranty expired on <strong>{{ order.reg_id.warnt_enddate|date:"d M Y" }}</strong>.<br>
+                        • <strong>Rule 2 (Irreparable):</strong> If marked Irreparable, Total Amount is <strong>₹0.00</strong> (No charge policy).<br>
+                        • <strong>Rule 3 (Repaired):</strong> Total Amount = Spare Parts (₹{{ parts_total|floatformat:2 }}) + Technician Service Fee.
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Appliance & Spare Parts Summary Card -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-tv"></i> Serviced Appliance & Consumed Inventory</h2>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color);">
+            <div>
+                <span style="font-size: 12px; color: var(--text-muted);">Product:</span>
+                <div><strong>{{ order.reg_id.prid.prname }}</strong></div>
+            </div>
+            <div>
+                <span style="font-size: 12px; color: var(--text-muted);">Model / Serial:</span>
+                <div><code>{{ order.reg_id.prid.model }}</code> / {{ order.prod_no }}</div>
+            </div>
+            <div>
+                <span style="font-size: 12px; color: var(--text-muted);">Customer:</span>
+                <div><strong>{{ order.reg_id.consumer_id.fname }} {{ order.reg_id.consumer_id.lname }}</strong></div>
+            </div>
+            <div>
+                <span style="font-size: 12px; color: var(--text-muted);">Technician:</span>
+                <div><strong>{{ order.techid.tech_name|default:"Assigned Technician" }}</strong></div>
+            </div>
+        </div>
+
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px;">
+            Itemized Spare Parts Consumed
+        </h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Part Name</th>
+                        <th>Unit Price</th>
+                        <th>Qty Used</th>
+                        <th style="text-align: right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dt in parts_dtls %}
+                        <tr>
+                            <td><strong>{{ dt.spareid.partsname }}</strong></td>
+                            <td class="tabular-num">₹{{ dt.spareid.price|floatformat:2 }}</td>
+                            <td class="tabular-num">{{ dt.Qty }}</td>
+                            <td class="tabular-num" style="text-align: right;">₹{% widthratio dt.Qty 1 dt.spareid.price %}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 14px;">
+                                No spare parts consumed on this repair ticket.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td colspan="3" style="text-align: right; font-weight: 700;">Total Spare Parts:</td>
+                        <td class="tabular-num" style="text-align: right; font-weight: 700; color: var(--primary-navy);">
+                            ₹{{ parts_total|floatformat:2 }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Invoice Generation Form -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-file-invoice"></i> Finalize Invoice & Billing Details</h2>
+        </div>
+
+        <form method="POST" action="{% url 'services:tech_generate_invoice' order.W_orderid %}" id="invoiceForm">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Appliance Repair Outcome *</label>
+                    <div style="display: flex; gap: 24px; margin-top: 6px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="radio" name="repaired" value="Yes" checked id="radioRepairedYes" onchange="updateBilling()">
+                            <span style="font-weight: 600; color: #166534;"><i class="fa-solid fa-circle-check"></i> Repaired Successfully</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="radio" name="repaired" value="No" id="radioRepairedNo" onchange="updateBilling()">
+                            <span style="font-weight: 600; color: #991B1B;"><i class="fa-solid fa-circle-xmark"></i> Irreparable</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="serviceFeeGroup">
+                    <label class="form-label" for="service_fee">Technician Service Charge (₹)</label>
+                    <input type="number" id="service_fee" name="service_fee" value="350.00" step="10" min="0" class="form-control" oninput="updateBilling()">
+                    <span style="font-size: 11px; color: var(--text-muted);">Standard base service fee for out-of-warranty labor.</span>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Calculated Final Invoice Total</label>
+                    <div id="displayTotal" style="font-size: 24px; font-weight: 800; color: var(--primary-navy); padding: 8px 0;">
+                        {% if in_warranty %}₹0.00{% else %}₹{{ parts_total|floatformat:2 }}{% endif %}
+                    </div>
+                    <span id="billingNote" style="font-size: 12px; color: var(--text-muted);">
+                        {% if in_warranty %}100% Free under manufacturer warranty.{% else %}Spare parts + service charge.{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 18px;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 16px;">
+                    <i class="fa-solid fa-stamp"></i> Finalize & Generate Service Invoice
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function updateBilling() {
+    const isWarranty = {% if in_warranty %}true{% else %}false{% endif %};
+    const partsTotal = {{ parts_total }};
+    const isRepaired = document.getElementById('radioRepairedYes').checked;
+    const feeInput = document.getElementById('service_fee');
+    const displayTotal = document.getElementById('displayTotal');
+    const billingNote = document.getElementById('billingNote');
+
+    if (isWarranty) {
+        displayTotal.innerText = '₹0.00';
+        feeInput.value = '0.00';
+        feeInput.disabled = true;
+        if (!isRepaired) {
+            billingNote.innerText = 'In-warranty irreparable. Flagged for Warranty Product Replacement.';
+        } else {
+            billingNote.innerText = 'Free service covered under manufacturer warranty.';
+        }
+    } else {
+        if (!isRepaired) {
+            displayTotal.innerText = '₹0.00';
+            feeInput.value = '0.00';
+            feeInput.disabled = true;
+            billingNote.innerText = 'Rule 2: Out of warranty & Irreparable -> ₹0.00 charge.';
+        } else {
+            feeInput.disabled = false;
+            let fee = parseFloat(feeInput.value) || 0;
+            let total = partsTotal + fee;
+            displayTotal.innerText = '₹' + total.toFixed(2);
+            billingNote.innerText = 'Rule 3: Spare parts (₹' + partsTotal.toFixed(2) + ') + Service Fee (₹' + fee.toFixed(2) + ').';
+        }
+    }
+}
+document.addEventListener('DOMContentLoaded', updateBilling);
+</script>
+{% endblock %}

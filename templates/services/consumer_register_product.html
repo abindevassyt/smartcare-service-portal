@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Electronic Appliance{% endblock %}
+{% block page_title %}Appliance Registration & Warranty Enrollment{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-circle-plus"></i> Register Appliance for Warranty & Care</h2>
+    </div>
+    <form method="POST" action="{% url 'services:consumer_register_product' %}">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label" for="prid">Select Electronic Appliance *</label>
+                <select id="prid" name="prid" class="form-control" required>
+                    <option value="">-- Choose Brand & Model --</option>
+                    {% for p in products %}
+                        <option value="{{ p.prid }}">{{ p.prname }} (Model: {{ p.model }} - ?{{ p.price|floatformat:2 }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="prod_no">Appliance Serial Number (Unit No) *</label>
+                <input type="number" id="prod_no" name="prod_no" class="form-control" placeholder="e.g. 102455" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="warnt_cardno">Warranty Card Number *</label>
+                <input type="number" id="warnt_cardno" name="warnt_cardno" class="form-control" placeholder="e.g. 883921" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="Invoice_no">Purchase Invoice Number *</label>
+                <input type="number" id="Invoice_no" name="Invoice_no" class="form-control" placeholder="e.g. 54201" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="Invoice_date">Purchase Invoice Date *</label>
+                <input type="date" id="Invoice_date" name="Invoice_date" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="warnt_enddate">Warranty Expiration Date *</label>
+                <input type="date" id="warnt_enddate" name="warnt_enddate" class="form-control" required>
+            </div>
+        </div>
+
+        <div style="margin-top: 10px;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-check"></i> Submit Appliance for Verification
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-boxes-stacked"></i> My Registered Appliances ({{ annotated_apps|length }})</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Reg ID</th>
+                    <th>Appliance</th>
+                    <th>Serial No</th>
+                    <th>Warranty Card</th>
+                    <th>Invoice No & Date</th>
+                    <th>Warranty End Date</th>
+                    <th>Warranty Status</th>
+                    <th>Activation Gate</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in annotated_apps %}
+                    <tr>
+                        <td class="tabular-num">#{{ item.app.Reg_id }}</td>
+                        <td>
+                            <strong>{{ item.app.prid.prname }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">Model: {{ item.app.prid.model }}</div>
+                        </td>
+                        <td class="tabular-num"><code>{{ item.app.prod_no }}</code></td>
+                        <td class="tabular-num">{{ item.app.warnt_cardno }}</td>
+                        <td>
+                            <div>#{{ item.app.Invoice_no }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ item.app.Invoice_date|date:"d M Y" }}</div>
+                        </td>
+                        <td>{{ item.app.warnt_enddate|date:"d M Y" }}</td>
+                        <td>
+                            {% if item.in_warranty %}
+                                <span class="badge badge-success"><i class="fa-solid fa-shield"></i> Valid</span>
+                            {% else %}
+                                <span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Expired</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.app.Isactive == 'Active' %}
+                                <span class="badge badge-success"><i class="fa-solid fa-check"></i> Verified</span>
+                            {% else %}
+                                <span class="badge badge-warning" title="Technician will verify invoice & warranty card"><i class="fa-solid fa-clock"></i> Pending Verification</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            You have not registered any appliances yet. Complete the form above to add your first appliance.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

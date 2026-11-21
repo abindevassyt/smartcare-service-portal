@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Work Order Statuses{% endblock %}
+{% block page_title %}Service Workflow Statuses{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start;">
+    <!-- Add Status Form -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-plus-circle"></i> Add Work Status</h2>
+        </div>
+        <form method="POST" action="{% url 'services:manage_statuses' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label" for="W_status">Status Name *</label>
+                <input type="text" id="W_status" name="W_status" class="form-control" placeholder="e.g. Under Diagnostics" required maxlength="20">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <i class="fa-solid fa-save"></i> Save Status
+            </button>
+        </form>
+    </div>
+
+    <!-- Statuses Table -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-list-check"></i> Standard Status Taxonomy ({{ statuses|length }})</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th>Status Name</th>
+                        <th style="text-align: right; width: 140px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for st in statuses %}
+                        <tr>
+                            <td class="tabular-num">#{{ st.Wo_stid }}</td>
+                            <td>
+                                {% if st.W_status == 'Completed' %}
+                                    <span class="badge badge-success">{{ st.W_status }}</span>
+                                {% elif st.W_status == 'Cancelled' or st.W_status == 'Irreparable' %}
+                                    <span class="badge badge-danger">{{ st.W_status }}</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ st.W_status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{% url 'services:edit_status' st.Wo_stid %}" class="btn btn-secondary btn-sm" title="Edit">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <form method="POST" action="{% url 'services:delete_status' st.Wo_stid %}" style="display: inline-block;" onsubmit="return confirm('Delete status {{ st.W_status }}?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                                No statuses defined.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

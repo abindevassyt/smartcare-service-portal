@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Products Catalog{% endblock %}
+{% block page_title %}Authorized Electronics Equipment Catalog{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-tv"></i> Serviced Products & Models ({{ products|length }})</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">Image</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Model</th>
+                    <th>Serial Format</th>
+                    <th>Specifications</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                    <tr>
+                        <td>
+                            {% if p.img %}
+                                <img src="{{ p.img.url }}" alt="{{ p.prname }}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 6px;">
+                            {% else %}
+                                <div style="width: 44px; height: 44px; background: #F1F5F9; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #94A3B8;">
+                                    <i class="fa-solid fa-image"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td><strong>{{ p.prname }}</strong></td>
+                        <td><span class="badge badge-info">{{ p.pcatid.category }}</span></td>
+                        <td><code>{{ p.model }}</code></td>
+                        <td>{{ p.srno }}</td>
+                        <td style="color: var(--text-muted);">{{ p.des }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">No products cataloged.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

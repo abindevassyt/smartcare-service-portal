@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Technician Dashboard{% endblock %}
+{% block page_title %}Technician Field Operations & Diagnostics Console{% endblock %}
+
+{% block content %}
+<!-- KPI Metrics Grid -->
+<div class="kpi-grid" style="margin-bottom: 24px;">
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-blue">
+            <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ assigned_orders|length }}</h3>
+            <p>Total Assigned Jobs</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-amber">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ active_tickets_count }}</h3>
+            <p>Active In-Progress Tickets</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-purple">
+            <i class="fa-solid fa-user-clock"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ pending_consumer_activations }}</h3>
+            <p>Consumer Activations</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-green">
+            <i class="fa-solid fa-certificate"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ pending_product_activations }}</h3>
+            <p>Appliance Verifications</p>
+        </div>
+    </div>
+</div>
+
+<!-- Activation Queues Quick Access Bar -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-bolt"></i> Technician Activation Queues & References</h2>
+    </div>
+    <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+        <a href="{% url 'accounts:tech_activate_consumers' %}" class="btn btn-primary">
+            <i class="fa-solid fa-user-check"></i> Consumer Activation Queue
+            {% if pending_consumer_activations > 0 %}
+                <span style="background: #FFFFFF; color: var(--primary-navy); border-radius: 12px; padding: 2px 7px; font-size: 11px; margin-left: 6px; font-weight: 700;">{{ pending_consumer_activations }}</span>
+            {% endif %}
+        </a>
+        <a href="{% url 'services:tech_activate_products' %}" class="btn btn-primary">
+            <i class="fa-solid fa-barcode"></i> Appliance Verification Queue
+            {% if pending_product_activations > 0 %}
+                <span style="background: #FFFFFF; color: var(--primary-navy); border-radius: 12px; padding: 2px 7px; font-size: 11px; margin-left: 6px; font-weight: 700;">{{ pending_product_activations }}</span>
+            {% endif %}
+        </a>
+        <a href="{% url 'products:tech_spare_parts' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-gears"></i> Spare Parts Stock Registry
+        </a>
+        <a href="{% url 'products:tech_products' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-tv"></i> Serviced Products Catalog
+        </a>
+    </div>
+</div>
+
+<!-- Active & In-Progress Work Orders Table -->
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="card-title"><i class="fa-solid fa-wrench"></i> Active Assigned Work Orders ({{ active_tickets_count }})</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">WO ID</th>
+                    <th>Req No</th>
+                    <th>Customer Name</th>
+                    <th>Mobile</th>
+                    <th>Appliance & Model</th>
+                    <th>Warranty</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in assigned_orders %}
+                    {% if order.w_stid.W_status != 'Completed' and order.w_stid.W_status != 'Cancelled' %}
+                        <tr>
+                            <td class="tabular-num">#{{ order.W_orderid }}</td>
+                            <td class="tabular-num"><strong>{{ order.Serv_req_no }}</strong></td>
+                            <td>
+                                <strong>{{ order.reg_id.consumer_id.fname }} {{ order.reg_id.consumer_id.lname }}</strong>
+                            </td>
+                            <td><i class="fa-solid fa-phone"></i> {{ order.reg_id.consumer_id.mob }}</td>
+                            <td>
+                                <strong>{{ order.reg_id.prid.prname }}</strong>
+                                <div style="font-size: 11px; color: var(--text-muted);">S/N: {{ order.prod_no }}</div>
+                            </td>
+                            <td>
+                                {% if order.is_warranty_covered %}
+                                    <span class="badge badge-success"><i class="fa-solid fa-shield"></i> In Warranty</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Out of Warranty</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ order.loc_type }}</td>
+                            <td>
+                                {% if order.w_stid.W_status == 'In Progress' %}
+                                    <span class="badge badge-warning"><i class="fa-solid fa-spinner"></i> In Progress</span>
+                                {% elif order.w_stid.W_status == 'Assigned' %}
+                                    <span class="badge badge-info"><i class="fa-solid fa-user-check"></i> Assigned</span>
+                                {% elif 'Spare' in order.w_stid.W_status %}
+                                    <span class="badge badge-warning"><i class="fa-solid fa-gears"></i> Spare Pending</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ order.w_stid.W_status }}</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="{% url 'services:tech_work_order_detail' order.W_orderid %}" class="btn btn-primary btn-sm">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i> Workspace
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                            <i class="fa-solid fa-check-double" style="font-size: 24px; margin-bottom: 8px; display: block; color: var(--status-green);"></i>
+                            No active tickets currently assigned to you.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Completed & Archived Work Orders -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-circle-check"></i> Completed Service History ({{ completed_tickets_count }})</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">WO ID</th>
+                    <th>Req No</th>
+                    <th>Customer Name</th>
+                    <th>Appliance</th>
+                    <th>Closed Date</th>
+                    <th>Invoice Total</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders_completed %}
+                    <tr>
+                        <td class="tabular-num">#{{ order.W_orderid }}</td>
+                        <td class="tabular-num">{{ order.Serv_req_no }}</td>
+                        <td>{{ order.reg_id.consumer_id.fname }} {{ order.reg_id.consumer_id.lname }}</td>
+                        <td>{{ order.reg_id.prid.prname }}</td>
+                        <td>{{ order.close_date|date:"d M Y"|default:"Closed" }}</td>
+                        <td class="tabular-num" style="font-weight: 700;">₹{{ order.Inv_amt|floatformat:2 }}</td>
+                        <td>
+                            <span class="badge badge-success"><i class="fa-solid fa-check"></i> Completed</span>
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="{% url 'services:tech_work_order_detail' order.W_orderid %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-eye"></i> View Details
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 20px; color: var(--text-muted);">
+                            No completed service orders logged yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

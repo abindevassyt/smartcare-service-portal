@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Appliance Support & Complaints{% endblock %}
+{% block page_title %}Complaints & Customer Support Desk{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start;">
+    <!-- Raise Complaint Form -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-headset"></i> Submit New Complaint</h2>
+        </div>
+
+        {% if not user_appliances %}
+            <div class="alert alert-warning">
+                You have not registered any appliances yet. Please <a href="{% url 'services:consumer_register_product' %}">register your appliance</a> to lodge complaints.
+            </div>
+        {% else %}
+            <form method="POST" action="{% url 'services:consumer_complaints' %}">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label class="form-label" for="reg_id">Select Appliance *</label>
+                    <select id="reg_id" name="reg_id" class="form-control" required>
+                        <option value="">-- Choose Appliance --</option>
+                        {% for a in user_appliances %}
+                            <option value="{{ a.Reg_id }}">{{ a.prid.prname }} (S/N: {{ a.prod_no }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="complaint">Complaint Details *</label>
+                    <textarea id="complaint" name="complaint" class="form-control" rows="5" placeholder="Explain your grievance, product issue, or service feedback..." required maxlength="100"></textarea>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Maximum 100 characters.</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fa-solid fa-paper-plane"></i> Submit Complaint
+                </button>
+            </form>
+        {% endif %}
+    </div>
+
+    <!-- Past Complaints & Admin Replies -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-clipboard-question"></i> My Complaints & Responses ({{ complaints|length }})</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 70px;">ID</th>
+                        <th>Date</th>
+                        <th>Appliance</th>
+                        <th>Grievance</th>
+                        <th>Official Center Reply</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in complaints %}
+                        <tr>
+                            <td class="tabular-num">#{{ c.com_id }}</td>
+                            <td>{{ c.com_date|date:"d M Y" }}</td>
+                            <td>{{ c.Reg_id.prid.prname }}</td>
+                            <td style="max-width: 200px;">{{ c.Complaint }}</td>
+                            <td style="max-width: 220px;">
+                                {% if c.Reply %}
+                                    <div style="color: var(--status-green); font-weight: 500;">
+                                        <i class="fa-solid fa-reply"></i> {{ c.Reply }}
+                                    </div>
+                                {% else %}
+                                    <span style="color: var(--text-muted); font-style: italic;">Awaiting Center Reply</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if c.Status == 'Resolved' %}
+                                    <span class="badge badge-success">Resolved</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Open</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                                You have not submitted any complaints.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

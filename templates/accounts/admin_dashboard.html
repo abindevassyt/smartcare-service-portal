@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Administrator Command Center{% endblock %}
+
+{% block content %}
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-blue">
+            <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ total_consumers }}</h3>
+            <p>Total Consumers</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-green">
+            <i class="fa-solid fa-building-circle-check"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ total_service_centers }}</h3>
+            <p>Active Service Centers</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-amber">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ pending_work_orders }}</h3>
+            <p>Pending Work Orders</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-purple">
+            <i class="fa-solid fa-user-gear"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ total_technicians }}</h3>
+            <p>Field Technicians</p>
+        </div>
+    </div>
+
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-red">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ low_stock_parts }}</h3>
+            <p>Low-Stock Spares (<5)</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-bolt"></i> Quick Administrative Actions</h2>
+    </div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <a href="{% url 'accounts:manage_service_centers' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-plus"></i> Add Service Center
+        </a>
+        <a href="{% url 'products:manage_products' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-plus"></i> Add Product
+        </a>
+        <a href="{% url 'accounts:manage_technicians' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-user-plus"></i> Register Technician
+        </a>
+        <a href="{% url 'services:admin_work_orders' %}" class="btn btn-primary">
+            <i class="fa-solid fa-clipboard-check"></i> Assign Work Orders
+        </a>
+        <a href="{% url 'services:admin_reports' %}" class="btn btn-secondary">
+            <i class="fa-solid fa-file-csv"></i> Generate Reports
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-list-check"></i> Recent Work Orders & Complaints</h2>
+        <a href="{% url 'services:admin_work_orders' %}" class="btn btn-secondary btn-sm">View All Orders</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>WO ID</th>
+                    <th>Req No</th>
+                    <th>Consumer</th>
+                    <th>Product</th>
+                    <th>Technician</th>
+                    <th>Location Type</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                    <tr>
+                        <td class="tabular-num">#{{ order.W_orderid }}</td>
+                        <td class="tabular-num">{{ order.Serv_req_no }}</td>
+                        <td>{{ order.reg_id.consumer_id.fname }} {{ order.reg_id.consumer_id.lname }}</td>
+                        <td>{{ order.reg_id.prid.prname }}</td>
+                        <td>
+                            {% if order.techid %}
+                                <span style="font-weight: 500;">{{ order.techid.tech_name }}</span>
+                            {% else %}
+                                <span class="badge badge-warning">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ order.loc_type }}</td>
+                        <td>
+                            {% if order.w_stid.W_status == 'Completed' %}
+                                <span class="badge badge-success">{{ order.w_stid.W_status }}</span>
+                            {% elif order.w_stid.W_status == 'Pending' or order.w_stid.W_status == 'Assigned' %}
+                                <span class="badge badge-warning">{{ order.w_stid.W_status }}</span>
+                            {% else %}
+                                <span class="badge badge-danger">{{ order.w_stid.W_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ order.cre_date|date:"d M Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 24px; color: var(--text-muted);">
+                            <i class="fa-regular fa-folder-open" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                            No work orders logged yet. Once consumers register complaints, they will appear here for technician assignment.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

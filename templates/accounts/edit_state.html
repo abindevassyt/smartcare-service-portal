@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit State{% endblock %}
+{% block page_title %}Edit State #{{ state.statid }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-pen-to-square"></i> Modify State Name</h2>
+        <a href="{% url 'accounts:manage_states' %}" class="btn btn-secondary btn-sm">Back to List</a>
+    </div>
+
+    <form method="POST" action="{% url 'accounts:edit_state' state.statid %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label class="form-label" for="state">State Name *</label>
+            <input type="text" id="state" name="state" class="form-control" value="{{ state.state }}" required maxlength="20">
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                <i class="fa-solid fa-check"></i> Update State
+            </button>
+            <a href="{% url 'accounts:manage_states' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

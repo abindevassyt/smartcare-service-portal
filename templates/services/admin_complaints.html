@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Complaints{% endblock %}
+{% block page_title %}Portal Complaints & Feedback Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-comments"></i> Consumer Complaints ({{ complaints|length }})</h2>
+        <form method="GET" action="{% url 'services:admin_complaints' %}" style="display: flex; gap: 8px;">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search complaint, customer..." class="form-control" style="padding: 6px 12px; font-size: 13px; width: 220px;">
+            <select name="status" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 130px;">
+                <option value="">All Statuses</option>
+                <option value="Open" {% if status_filter == 'Open' %}selected{% endif %}>Open</option>
+                <option value="Resolved" {% if status_filter == 'Resolved' %}selected{% endif %}>Resolved</option>
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-filter"></i></button>
+            {% if query or status_filter %}<a href="{% url 'services:admin_complaints' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-xmark"></i></a>{% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">ID</th>
+                    <th>Date</th>
+                    <th>Consumer</th>
+                    <th>Product</th>
+                    <th>Complaint / Issue</th>
+                    <th>Admin Reply</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in complaints %}
+                    <tr>
+                        <td class="tabular-num">#{{ c.com_id }}</td>
+                        <td>{{ c.com_date|date:"d M Y" }}</td>
+                        <td>
+                            <strong>{{ c.Reg_id.consumer_id.fname }} {{ c.Reg_id.consumer_id.lname }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">{{ c.Reg_id.consumer_id.mob }}</div>
+                        </td>
+                        <td>
+                            <div>{{ c.Reg_id.prid.prname }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">S/N: {{ c.Reg_id.prod_no }}</div>
+                        </td>
+                        <td style="max-width: 250px;">{{ c.Complaint }}</td>
+                        <td style="max-width: 250px;">
+                            {% if c.Reply %}
+                                <span style="color: var(--status-green);"><i class="fa-solid fa-reply"></i> {{ c.Reply }}</span>
+                            {% else %}
+                                <span style="color: var(--text-muted); font-style: italic;">No reply yet</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if c.Status == 'Resolved' %}
+                                <span class="badge badge-success">Resolved</span>
+                            {% else %}
+                                <span class="badge badge-warning">Open</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="{% url 'services:admin_reply_complaint' c.com_id %}" class="btn btn-primary btn-sm">
+                                <i class="fa-solid fa-reply"></i> Reply
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            No consumer complaints logged.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

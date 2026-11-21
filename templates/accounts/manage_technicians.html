@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Technicians{% endblock %}
+{% block page_title %}Service Technicians Directory{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-user-plus"></i> Register New Technician</h2>
+    </div>
+    <form method="POST" action="{% url 'accounts:manage_technicians' %}">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label" for="tech_name">Technician Full Name *</label>
+                <input type="text" id="tech_name" name="tech_name" class="form-control" placeholder="e.g. Suresh Kumar" required maxlength="30">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Gender">Gender *</label>
+                <select id="Gender" name="Gender" class="form-control">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label" for="Address">Address *</label>
+                <input type="text" id="Address" name="Address" class="form-control" placeholder="Residential Address" required maxlength="100">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="statid">State *</label>
+                <select id="statid" name="statid" class="form-control" required>
+                    <option value="">-- Select State --</option>
+                    {% for st in states %}
+                        <option value="{{ st.statid }}">{{ st.state }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Distid">District *</label>
+                <select id="Distid" name="Distid" class="form-control" required>
+                    <option value="">-- Select State First --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Quali">Qualification *</label>
+                <input type="text" id="Quali" name="Quali" class="form-control" placeholder="e.g. Diploma Electronics / ITI" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Exp">Experience</label>
+                <input type="text" id="Exp" name="Exp" class="form-control" placeholder="e.g. 4 Years" maxlength="10">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Mob">Mobile Number *</label>
+                <input type="tel" id="Mob" name="Mob" class="form-control" placeholder="10-digit mobile" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Email">Email (Portal Username) *</label>
+                <input type="email" id="Email" name="Email" class="form-control" placeholder="tech@smartcare.com" required maxlength="30">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">Login Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Default: tech123">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Status">Status</label>
+                <select id="Status" name="Status" class="form-control">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-top: 10px;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-user-check"></i> Register Technician & Create Portal Account
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-user-gear"></i> Qualified Technicians ({{ technicians|length }})</h2>
+        <form method="GET" action="{% url 'accounts:manage_technicians' %}" style="display: flex; gap: 8px;">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search technician..." class="form-control" style="padding: 6px 12px; font-size: 13px; width: 180px;">
+            <select name="status" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 120px;">
+                <option value="">All Statuses</option>
+                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+                <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-filter"></i></button>
+            {% if query or status_filter %}<a href="{% url 'accounts:manage_technicians' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-xmark"></i></a>{% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Technician Name</th>
+                    <th>District / State</th>
+                    <th>Qual / Exp</th>
+                    <th>Mobile</th>
+                    <th>Email (Username)</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in technicians %}
+                    <tr>
+                        <td class="tabular-num">#{{ t.techid }}</td>
+                        <td><strong>{{ t.tech_name }}</strong> ({{ t.Gender }})</td>
+                        <td>{{ t.Distid.District }}, {{ t.statid.state }}</td>
+                        <td>{{ t.Quali }} ({{ t.Exp }})</td>
+                        <td>{{ t.Mob }}</td>
+                        <td><code>{{ t.Email }}</code></td>
+                        <td>
+                            {% if t.Status == 'Active' %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="{% url 'accounts:edit_technician' t.techid %}" class="btn btn-secondary btn-sm" title="Edit">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
+                            <form method="POST" action="{% url 'accounts:delete_technician' t.techid %}" style="display: inline-block;" onsubmit="return confirm('Remove technician {{ t.tech_name }} and revoke portal credentials?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            No technicians found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const stateSelect = document.getElementById('statid');
+        const distSelect = document.getElementById('Distid');
+
+        stateSelect.addEventListener('change', function() {
+            const sid = this.value;
+            if (!sid) {
+                distSelect.innerHTML = '<option value="">-- Select State First --</option>';
+                return;
+            }
+            distSelect.innerHTML = '<option value="">Loading districts...</option>';
+            fetch(/api/districts//)
+                .then(r => r.json())
+                .then(data => {
+                    distSelect.innerHTML = '<option value="">-- Select District --</option>';
+                    data.districts.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        opt.textContent = d.name;
+                        distSelect.appendChild(opt);
+                    });
+                });
+        });
+    });
+</script>
+{% endblock %}

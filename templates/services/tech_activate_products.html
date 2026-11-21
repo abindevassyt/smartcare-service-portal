@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Verify Consumer Appliances{% endblock %}
+{% block page_title %}Consumer Appliance Verification Queue{% endblock %}
+
+{% block content %}
+<div class="kpi-grid" style="margin-bottom: 24px;">
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-amber">
+            <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ pending_count }}</h3>
+            <p>Appliances Pending Verification</p>
+        </div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-wrap kpi-icon-green">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="kpi-info">
+            <h3>{{ active_count }}</h3>
+            <p>Verified Active Appliances</p>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <h2 class="card-title"><i class="fa-solid fa-certificate"></i> Consumer Appliance Warranty & Activation Registry</h2>
+
+        <form method="GET" action="{% url 'services:tech_activate_products' %}" style="display: flex; gap: 8px; align-items: center;">
+            <select name="status" class="form-control" style="width: auto; padding: 6px 10px;" onchange="this.form.submit()">
+                <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending Verification</option>
+                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active Only</option>
+                <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All Appliances</option>
+            </select>
+            <input type="text" name="q" value="{{ query }}" placeholder="Search S/N, invoice, consumer..." class="form-control" style="width: 240px; padding: 6px 12px;">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i></button>
+            {% if query or status_filter != 'Pending' %}
+                <a href="{% url 'services:tech_activate_products' %}" class="btn btn-secondary btn-sm">Reset</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 70px;">Reg ID</th>
+                    <th>Consumer Name</th>
+                    <th>Appliance & Model</th>
+                    <th>Serial Number</th>
+                    <th>Warranty Card & Invoice</th>
+                    <th>Dates (Inv / Warnt End)</th>
+                    <th>Warranty Status</th>
+                    <th>Activation</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in appliance_data %}
+                    <tr>
+                        <td class="tabular-num">#{{ item.app.Reg_id }}</td>
+                        <td>
+                            <strong>{{ item.app.consumer_id.fname }} {{ item.app.consumer_id.lname }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> {{ item.app.consumer_id.mob }}</div>
+                        </td>
+                        <td>
+                            <strong>{{ item.app.prid.prname }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">Model: {{ item.app.prid.model }} ({{ item.app.prid.pcatid.category }})</div>
+                        </td>
+                        <td><code>{{ item.app.prod_no }}</code></td>
+                        <td>
+                            <div>W-Card: <strong>#{{ item.app.warnt_cardno }}</strong></div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Inv: #{{ item.app.Invoice_no }}</div>
+                        </td>
+                        <td>
+                            <div>Inv: {{ item.app.Invoice_date|date:"d M Y" }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Expires: {{ item.app.warnt_enddate|date:"d M Y" }}</div>
+                        </td>
+                        <td>
+                            {% if item.in_warranty %}
+                                <span class="badge badge-success"><i class="fa-solid fa-shield"></i> In Warranty</span>
+                            {% else %}
+                                <span class="badge badge-danger">Expired</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.app.Isactive == 'Active' %}
+                                <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Active</span>
+                            {% else %}
+                                <span class="badge badge-warning"><i class="fa-solid fa-clock"></i> Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <form method="POST" action="{% url 'services:tech_activate_product_toggle' item.app.Reg_id %}" style="display: inline;">
+                                {% csrf_token %}
+                                {% if item.app.Isactive == 'Pending' %}
+                                    <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Verify and activate appliance serial #{{ item.app.prod_no }} for service?');">
+                                        <i class="fa-solid fa-check"></i> Verify Appliance
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Revert appliance #{{ item.app.prod_no }} to Pending?');">
+                                        <i class="fa-solid fa-pause"></i> Revert
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                            <i class="fa-solid fa-box-open" style="font-size: 28px; margin-bottom: 8px; display: block;"></i>
+                            No appliances found matching your filter criteria.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

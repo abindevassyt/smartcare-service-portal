@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Work Order #{{ order.W_orderid }} Details{% endblock %}
+{% block page_title %}Service Inspection: Work Order #{{ order.W_orderid }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+        <span style="font-size: 13px; color: var(--text-muted);">Request No:</span>
+        <strong style="font-size: 16px; color: var(--primary-navy);">#{{ order.Serv_req_no }}</strong>
+        <span style="margin-left: 12px;">
+            {% if in_warranty %}
+                <span class="badge badge-success"><i class="fa-solid fa-shield"></i> In Warranty</span>
+            {% else %}
+                <span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Out of Warranty</span>
+            {% endif %}
+        </span>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="{% url 'services:admin_assign_work_order' order.W_orderid %}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-pen"></i> Edit Assignment
+        </a>
+        <a href="{% url 'services:admin_work_orders' %}" class="btn btn-secondary btn-sm">
+            Back to Orders
+        </a>
+    </div>
+</div>
+
+<!-- Overview Cards Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 24px;">
+    <!-- Customer Info -->
+    <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            <i class="fa-solid fa-user"></i> Customer Info
+        </h3>
+        <p><strong>{{ order.reg_id.consumer_id.fname }} {{ order.reg_id.consumer_id.lname }}</strong></p>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">{{ order.reg_id.consumer_id.address }}</p>
+        <p style="font-size: 12px; color: var(--text-muted);">{{ order.reg_id.consumer_id.Distid.District }}, {{ order.reg_id.consumer_id.statid.state }} - {{ order.reg_id.consumer_id.pin }}</p>
+        <p style="font-size: 12px; margin-top: 6px;"><i class="fa-solid fa-phone"></i> {{ order.reg_id.consumer_id.mob }}</p>
+        <p style="font-size: 12px;"><i class="fa-regular fa-envelope"></i> {{ order.reg_id.consumer_id.email }}</p>
+    </div>
+
+    <!-- Appliance Info -->
+    <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            <i class="fa-solid fa-tv"></i> Appliance & Warranty
+        </h3>
+        <p><strong>{{ order.reg_id.prid.prname }}</strong></p>
+        <p style="font-size: 12px; color: var(--text-muted);">Model: <code>{{ order.reg_id.prid.model }}</code></p>
+        <p style="font-size: 12px; color: var(--text-muted);">Serial No: <code>{{ order.prod_no }}</code></p>
+        <p style="font-size: 12px; color: var(--text-muted);">Warranty Card: <code>{{ order.reg_id.warnt_cardno }}</code></p>
+        <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+            Warranty Expiry: <strong>{{ order.reg_id.warnt_enddate|date:"d M Y" }}</strong>
+        </p>
+    </div>
+
+    <!-- Ticket & Service Status -->
+    <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            <i class="fa-solid fa-clipboard-list"></i> Service Parameters
+        </h3>
+        <p style="font-size: 13px;">Status: 
+            {% if order.w_stid.W_status == 'Completed' %}
+                <span class="badge badge-success">{{ order.w_stid.W_status }}</span>
+            {% else %}
+                <span class="badge badge-warning">{{ order.w_stid.W_status }}</span>
+            {% endif %}
+        </p>
+        <p style="font-size: 12px; margin-top: 6px;">Technician: <strong>{{ order.techid.tech_name|default:'Unassigned' }}</strong></p>
+        <p style="font-size: 12px; color: var(--text-muted);">Location: {{ order.loc_type }}</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Call Type: {{ order.calltype }}</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Promised Delivery: {{ order.prom_del_date|date:"d M Y"|default:'Pending' }}</p>
+        <p style="font-size: 13px; font-weight: 600; margin-top: 6px;">
+            Estimate Amount: ?{{ order.Inv_amt|floatformat:2 }}
+        </p>
+    </div>
+</div>
+
+<!-- Activity Timeline -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-timeline"></i> Activity Timeline ({{ activities|length }})</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Log #</th>
+                    <th>Activity Status</th>
+                    <th>Remark / Description</th>
+                    <th>Logged Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for act in activities %}
+                    <tr>
+                        <td class="tabular-num">#{{ act.Activityno }}</td>
+                        <td><span class="badge badge-info">{{ act.act_status }}</span></td>
+                        <td>{{ act.Remark }}</td>
+                        <td>{{ act.cre_date|date:"d M Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 18px;">
+                            No activities logged yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Diagnostics / Defects Symptoms -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-stethoscope"></i> Diagnostic Observations & Symptoms</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Defect ID</th>
+                    <th>Technician Observation</th>
+                    <th>Defect Description</th>
+                    <th>Symptom</th>
+                    <th>Condition</th>
+                    <th>Repaired?</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in defects %}
+                    <tr>
+                        <td class="tabular-num">#{{ d.defect_id }}</td>
+                        <td><strong>{{ d.defect_bytech }}</strong></td>
+                        <td>{{ d.defect_des }}</td>
+                        <td>{{ d.Symptom }}</td>
+                        <td>{{ d.Condition }}</td>
+                        <td>
+                            {% if d.Repaired == 'Yes' %}
+                                <span class="badge badge-success">Repaired</span>
+                            {% else %}
+                                <span class="badge badge-danger">Not Repaired (Irreparable)</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ d.Status }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 18px;">
+                            No diagnostic defect record entered by technician yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Service Parts Logged -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-gears"></i> Spare Parts Used</h2>
+    </div>
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Part Name</th>
+                    <th>Unit Price</th>
+                    <th>Quantity Used</th>
+                    <th>Reason / Position</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in service_parts %}
+                    {% for dt in sp.details.all %}
+                        <tr>
+                            <td><strong>{{ dt.spareid.partsname }}</strong></td>
+                            <td class="tabular-num">?{{ dt.spareid.price|floatformat:2 }}</td>
+                            <td class="tabular-num">{{ dt.Qty }}</td>
+                            <td>{{ sp.Reason }} / {{ sp.Position }}</td>
+                            <td class="tabular-num" style="font-weight: 700;">?{{ dt.spareid.price|floatformat:2 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 12px;">No spare part details.</td>
+                        </tr>
+                    {% endfor %}
+                {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 18px;">
+                            No replacement spare parts used for this ticket.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

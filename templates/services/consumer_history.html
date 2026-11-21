@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Service History{% endblock %}
+{% block page_title %}Service & Repair Transaction History{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Completed Service Tickets ({{ completed_orders|length }})</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>WO ID</th>
+                    <th>Request No</th>
+                    <th>Product</th>
+                    <th>Serial No</th>
+                    <th>Completed Date</th>
+                    <th>Serviced By</th>
+                    <th>Invoice Total</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Invoice Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for o in completed_orders %}
+                    <tr>
+                        <td class="tabular-num">#{{ o.W_orderid }}</td>
+                        <td class="tabular-num"><strong>#{{ o.Serv_req_no }}</strong></td>
+                        <td>{{ o.reg_id.prid.prname }}</td>
+                        <td class="tabular-num"><code>{{ o.prod_no }}</code></td>
+                        <td>{{ o.close_date|date:"d M Y"|default:o.modi_date|date:"d M Y" }}</td>
+                        <td>{{ o.techid.tech_name|default:'Service Center' }}</td>
+                        <td class="tabular-num" style="font-weight: 700; color: #0F172A;">
+                            ₹{{ o.Inv_amt|floatformat:2 }}
+                        </td>
+                        <td>
+                            <span class="badge badge-success"><i class="fa-solid fa-check"></i> Completed</span>
+                        </td>
+                        <td style="text-align: right;">
+                            {% with inv=o.invoices.first %}
+                                {% if inv %}
+                                    <a href="/invoice/{{ inv.Invoice_id }}/print/" target="_blank" class="btn btn-secondary btn-sm">
+                                        <i class="fa-solid fa-receipt"></i> Print Receipt
+                                    </a>
+                                {% else %}
+                                    <span style="font-size: 11px; color: var(--text-muted);">Invoice Processing</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            No completed service orders found in your transaction history.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Spare Parts{% endblock %}
+{% block page_title %}Spare Parts & Inventory Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-plus-circle"></i> Add Spare Part to Inventory</h2>
+    </div>
+    <form method="POST" action="{% url 'products:manage_spare_parts' %}">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label" for="prid">Associated Product *</label>
+                <select id="prid" name="prid" class="form-control" required>
+                    <option value="">-- Select Product --</option>
+                    {% for p in products %}
+                        <option value="{{ p.prid }}">{{ p.prname }} ({{ p.model }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="partsname">Spare Part Name *</label>
+                <input type="text" id="partsname" name="partsname" class="form-control" placeholder="e.g. Inverter Board / Defrost Sensor" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="price">Unit Price (?) *</label>
+                <input type="number" step="0.01" id="price" name="price" class="form-control" placeholder="e.g. 1250.00" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="qty">Initial Stock Quantity *</label>
+                <input type="number" id="qty" name="qty" class="form-control" placeholder="e.g. 25" min="0" value="0" required>
+            </div>
+        </div>
+
+        <div style="margin-top: 10px;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-save"></i> Save Spare Part
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-gears"></i> Spare Parts Inventory ({{ spare_parts|length }})</h2>
+        <form method="GET" action="{% url 'products:manage_spare_parts' %}" style="display: flex; gap: 8px;">
+            <select name="prid" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 180px;">
+                <option value="">All Products</option>
+                {% for p in products %}
+                    <option value="{{ p.prid }}" {% if prod_filter == p.prid|stringformat:'i' %}selected{% endif %}>{{ p.prname }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="q" value="{{ query }}" placeholder="Search spare part..." class="form-control" style="padding: 6px 12px; font-size: 13px; width: 180px;">
+            <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-filter"></i></button>
+            {% if query or prod_filter %}<a href="{% url 'products:manage_spare_parts' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-xmark"></i></a>{% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">ID</th>
+                    <th>Spare Part Name</th>
+                    <th>Product Model</th>
+                    <th>Unit Price</th>
+                    <th>Current Stock</th>
+                    <th>Inventory Status</th>
+                    <th style="text-align: right; width: 140px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sp in spare_parts %}
+                    <tr>
+                        <td class="tabular-num">#{{ sp.spareid }}</td>
+                        <td><strong>{{ sp.partsname }}</strong></td>
+                        <td>{{ sp.prid.prname }} ({{ sp.prid.model }})</td>
+                        <td class="tabular-num">?{{ sp.price|floatformat:2 }}</td>
+                        <td class="tabular-num" style="font-weight: 700; font-size: 15px;">{{ sp.qty }} units</td>
+                        <td>
+                            {% if sp.qty >= 10 %}
+                                <span class="badge badge-success">In Stock</span>
+                            {% elif sp.qty > 0 %}
+                                <span class="badge badge-warning">Low Stock ({{ sp.qty }})</span>
+                            {% else %}
+                                <span class="badge badge-danger">Out of Stock</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="{% url 'products:edit_spare_part' sp.spareid %}" class="btn btn-secondary btn-sm" title="Edit">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
+                            <form method="POST" action="{% url 'products:delete_spare_part' sp.spareid %}" style="display: inline-block;" onsubmit="return confirm('Delete spare part {{ sp.partsname }}?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            No spare parts found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

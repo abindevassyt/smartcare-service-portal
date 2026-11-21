@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Track Order #{{ order.W_orderid }}{% endblock %}
+{% block page_title %}Real-Time Ticket Tracking: #{{ order.Serv_req_no }}{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+        <span style="font-size: 13px; color: var(--text-muted);">Work Order ID:</span>
+        <strong style="font-size: 16px;">#{{ order.W_orderid }}</strong>
+        <span style="margin-left: 12px;">
+            {% if in_warranty %}
+                <span class="badge badge-success"><i class="fa-solid fa-shield"></i> Free Service (In Warranty)</span>
+            {% else %}
+                <span class="badge badge-danger">Out of Warranty</span>
+            {% endif %}
+        </span>
+    </div>
+    <a href="{% url 'services:consumer_track_orders' %}" class="btn btn-secondary btn-sm">
+        Back to Order List
+    </a>
+</div>
+
+<!-- Estimate Approval Action Banner -->
+{% if order.w_stid.W_status == 'Estimate Sent' or order.w_stid.W_status == 'Pending' and order.Inv_amt > 0 and not in_warranty %}
+    <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: gap: 16px;">
+            <div>
+                <h3 style="color: #92400E; font-size: 16px; font-weight: 700; margin-bottom: 4px;">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> Repair Estimate Posted by Service Center
+                </h3>
+                <p style="font-size: 13px; color: #78350F;">
+                    Estimated Cost for Out-of-Warranty Repair: <strong style="font-size: 16px; color: #0F172A;">₹{{ order.Inv_amt|floatformat:2 }}</strong>.
+                    Please approve to proceed with technician repairs or cancel if you do not wish to proceed.
+                </p>
+            </div>
+            <form method="POST" action="{% url 'services:consumer_respond_estimate' order.W_orderid %}" style="display: flex; gap: 10px;">
+                {% csrf_token %}
+                <button type="submit" name="action" value="accept" class="btn btn-success">
+                    <i class="fa-solid fa-check"></i> Accept Estimate
+                </button>
+                <button type="submit" name="action" value="cancel" class="btn btn-danger" onclick="return confirm('Cancel this repair request?');">
+                    <i class="fa-solid fa-xmark"></i> Cancel Order
+                </button>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Key Metrics Overview -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; margin-bottom: 24px;">
+    <!-- Appliance Details -->
+    <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            <i class="fa-solid fa-tv"></i> Appliance Details
+        </h3>
+        <p><strong>{{ order.reg_id.prid.prname }}</strong></p>
+        <p style="font-size: 12px; color: var(--text-muted);">Model: {{ order.reg_id.prid.model }}</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Serial Number: {{ order.prod_no }}</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Warranty Expiration: {{ order.reg_id.warnt_enddate|date:"d M Y" }}</p>
+    </div>
+
+    <!-- Assigned Technician -->
+    <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            <i class="fa-solid fa-user-gear"></i> Assigned Technician
+        </h3>
+        {% if order.techid %}
+            <p><strong>{{ order.techid.tech_name }}</strong></p>
+            <p style="font-size: 13px; margin-top: 4px;"><i class="fa-solid fa-phone"></i> {{ order.techid.Mob }}</p>
+            <p style="font-size: 13px;"><i class="fa-regular fa-envelope"></i> {{ order.techid.Email }}</p>
+            <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">Experience: {{ order.techid.Exp }}</p>
+        {% else %}
+            <p style="color: var(--text-muted); font-style: italic;">A technician will be assigned to your ticket shortly.</p>
+        {% endif %}
+    </div>
+
+    <!-- Service Progress & Delivery -->
+    <div class="card" style="margin-bottom: 0;">
+        <h3 style="font-size: 14px; font-weight: 700; color: var(--primary-navy); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px;">
+            <i class="fa-solid fa-list-check"></i> Ticket Status
+        </h3>
+        <p style="font-size: 14px; margin-bottom: 8px;">
+            Status: 
+            {% if order.w_stid.W_status == 'Completed' %}
+                <span class="badge badge-success">{{ order.w_stid.W_status }}</span>
+            {% elif order.w_stid.W_status == 'Cancelled' or order.w_stid.W_status == 'Irreparable' %}
+                <span class="badge badge-danger">{{ order.w_stid.W_status }}</span>
+            {% else %}
+                <span class="badge badge-warning">{{ order.w_stid.W_status }}</span>
+            {% endif %}
+        </p>
+        <p style="font-size: 12px; color: var(--text-muted);">Location: {{ order.loc_type }}</p>
+        <p style="font-size: 12px; color: var(--text-muted);">Promised Completion: <strong>{{ order.prom_del_date|date:"d M Y"|default:'In Diagnosis' }}</strong></p>
+        <p style="font-size: 13px; font-weight: 700; color: #0F172A; margin-top: 6px;">
+            Current Total: 
+            {% if in_warranty %}
+                <span style="color: var(--status-green);">₹0.00 (Warranty Covered)</span>
+            {% else %}
+                ₹{{ order.Inv_amt|floatformat:2 }}
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<!-- Chronological Activity Timeline -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Service Progress Log</h2>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 80px;">Log #</th>
+                    <th>Status</th>
+                    <th>Technician / System Remarks</th>
+                    <th>Date Logged</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for act in activities %}
+                    <tr>
+                        <td class="tabular-num">#{{ act.Activityno }}</td>
+                        <td><span class="badge badge-info">{{ act.act_status }}</span></td>
+                        <td>{{ act.Remark }}</td>
+                        <td>{{ act.cre_date|date:"d M Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            No activity updates logged yet.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Service Center{% endblock %}
+{% block page_title %}Edit Service Center #{{ center.serv_centid }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-pen-to-square"></i> Update Service Center</h2>
+        <a href="{% url 'accounts:manage_service_centers' %}" class="btn btn-secondary btn-sm">Back to Centers</a>
+    </div>
+
+    <form method="POST" action="{% url 'accounts:edit_service_center' center.serv_centid %}">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label" for="serv_cent">Center Name *</label>
+                <input type="text" id="serv_cent" name="serv_cent" class="form-control" value="{{ center.serv_cent }}" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="statid">State *</label>
+                <select id="statid" name="statid" class="form-control" required>
+                    {% for st in states %}
+                        <option value="{{ st.statid }}" {% if center.statid_id == st.statid %}selected{% endif %}>{{ st.state }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Distid">District *</label>
+                <select id="Distid" name="Distid" class="form-control" required>
+                    {% for d in districts %}
+                        <option value="{{ d.Distid }}" {% if center.Distid_id == d.Distid %}selected{% endif %}>{{ d.District }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="place">Place / City *</label>
+                <input type="text" id="place" name="place" class="form-control" value="{{ center.place }}" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="pin">PIN Code</label>
+                <input type="text" id="pin" name="pin" class="form-control" value="{{ center.pin }}" maxlength="10">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="landmark">Landmark</label>
+                <input type="text" id="landmark" name="landmark" class="form-control" value="{{ center.landmark }}" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Contact_per">Contact Person</label>
+                <input type="text" id="Contact_per" name="Contact_per" class="form-control" value="{{ center.Contact_per }}" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="phone">Phone *</label>
+                <input type="text" id="phone" name="phone" class="form-control" value="{{ center.phone }}" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="mob">Mobile *</label>
+                <input type="text" id="mob" name="mob" class="form-control" value="{{ center.mob }}" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="email">Email *</label>
+                <input type="email" id="email" name="email" class="form-control" value="{{ center.email }}" required maxlength="30">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="pwd">Reset Password (leave empty to keep current)</label>
+                <input type="password" id="pwd" name="pwd" class="form-control" placeholder="New password" maxlength="128">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="status">Operating Status</label>
+                <select id="status" name="status" class="form-control">
+                    <option value="Active" {% if center.status == 'Active' %}selected{% endif %}>Active</option>
+                    <option value="Inactive" {% if center.status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                <i class="fa-solid fa-check"></i> Update Service Center
+            </button>
+            <a href="{% url 'accounts:manage_service_centers' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

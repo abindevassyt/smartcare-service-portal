@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Service Centers{% endblock %}
+{% block page_title %}Service Centers Network{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-plus-circle"></i> Register New Service Center</h2>
+    </div>
+    <form method="POST" action="{% url 'accounts:manage_service_centers' %}">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label" for="serv_cent">Center Name *</label>
+                <input type="text" id="serv_cent" name="serv_cent" class="form-control" placeholder="e.g. SmartCare Ernakulam Hub" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="statid">State *</label>
+                <select id="statid" name="statid" class="form-control" required>
+                    <option value="">-- Select State --</option>
+                    {% for st in states %}
+                        <option value="{{ st.statid }}">{{ st.state }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Distid">District *</label>
+                <select id="Distid" name="Distid" class="form-control" required>
+                    <option value="">-- Select State First --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="place">Place / City *</label>
+                <input type="text" id="place" name="place" class="form-control" placeholder="e.g. MG Road, Kochi" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="pin">PIN Code</label>
+                <input type="text" id="pin" name="pin" class="form-control" placeholder="e.g. 682001" maxlength="10">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="landmark">Landmark</label>
+                <input type="text" id="landmark" name="landmark" class="form-control" placeholder="Near Metro Pillar" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Contact_per">Contact Person</label>
+                <input type="text" id="Contact_per" name="Contact_per" class="form-control" placeholder="Manager Name" maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="phone">Phone *</label>
+                <input type="text" id="phone" name="phone" class="form-control" placeholder="Landline number" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="mob">Mobile *</label>
+                <input type="text" id="mob" name="mob" class="form-control" placeholder="10-digit mobile" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="email">Email *</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="center@smartcare.com" required maxlength="30">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="username">Username *</label>
+                <input type="text" id="username" name="username" class="form-control" placeholder="Portal username" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="pwd">Password *</label>
+                <input type="password" id="pwd" name="pwd" class="form-control" placeholder="Portal password" required maxlength="128">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="status">Operating Status</label>
+                <select id="status" name="status" class="form-control">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+        </div>
+        <div style="margin-top: 10px;">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Register Service Center
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-building-shield"></i> Authorized Service Centers ({{ centers|length }})</h2>
+        <form method="GET" action="{% url 'accounts:manage_service_centers' %}" style="display: flex; gap: 8px;">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search center..." class="form-control" style="padding: 6px 12px; font-size: 13px; width: 180px;">
+            <select name="status" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 120px;">
+                <option value="">All Statuses</option>
+                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+                <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-filter"></i></button>
+            {% if query or status_filter %}<a href="{% url 'accounts:manage_service_centers' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-xmark"></i></a>{% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Center Name</th>
+                    <th>Location</th>
+                    <th>Contact</th>
+                    <th>Phone / Mob</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sc in centers %}
+                    <tr>
+                        <td class="tabular-num">#{{ sc.serv_centid }}</td>
+                        <td><strong>{{ sc.serv_cent }}</strong></td>
+                        <td>{{ sc.place }}, {{ sc.Distid.District }} ({{ sc.statid.state }})</td>
+                        <td>{{ sc.Contact_per|default:'-' }}</td>
+                        <td>{{ sc.mob }}</td>
+                        <td>{{ sc.email }}</td>
+                        <td>
+                            {% if sc.status == 'Active' %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="{% url 'accounts:edit_service_center' sc.serv_centid %}" class="btn btn-secondary btn-sm" title="Edit">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </a>
+                            <form method="POST" action="{% url 'accounts:delete_service_center' sc.serv_centid %}" style="display: inline-block;" onsubmit="return confirm('Delete service center {{ sc.serv_cent }}?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                            No service centers found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const stateSelect = document.getElementById('statid');
+        const distSelect = document.getElementById('Distid');
+
+        stateSelect.addEventListener('change', function() {
+            const sid = this.value;
+            if (!sid) {
+                distSelect.innerHTML = '<option value="">-- Select State First --</option>';
+                return;
+            }
+            distSelect.innerHTML = '<option value="">Loading districts...</option>';
+            fetch(/api/districts//)
+                .then(r => r.json())
+                .then(data => {
+                    distSelect.innerHTML = '<option value="">-- Select District --</option>';
+                    data.districts.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        opt.textContent = d.name;
+                        distSelect.appendChild(opt);
+                    });
+                });
+        });
+    });
+</script>
+{% endblock %}

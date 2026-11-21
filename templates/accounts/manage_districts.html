@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Districts{% endblock %}
+{% block page_title %}Districts Directory{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 1fr 2fr; gap: 24px; align-items: start;">
+    <!-- Add District Form -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-plus-circle"></i> Add New District</h2>
+        </div>
+        <form method="POST" action="{% url 'accounts:manage_districts' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label" for="statid">State *</label>
+                <select id="statid" name="statid" class="form-control" required>
+                    <option value="">-- Select State --</option>
+                    {% for st in states %}
+                        <option value="{{ st.statid }}" {% if selected_state == st.statid|stringformat:'i' %}selected{% endif %}>{{ st.state }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="District">District Name *</label>
+                <input type="text" id="District" name="District" class="form-control" placeholder="e.g. Ernakulam" required maxlength="20">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                <i class="fa-solid fa-save"></i> Save District
+            </button>
+        </form>
+    </div>
+
+    <!-- Districts Table -->
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fa-solid fa-map-pin"></i> Existing Districts ({{ districts|length }})</h2>
+            <form method="GET" action="{% url 'accounts:manage_districts' %}" style="display: flex; gap: 8px;">
+                <select name="statid" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 140px;">
+                    <option value="">All States</option>
+                    {% for st in states %}
+                        <option value="{{ st.statid }}" {% if selected_state == st.statid|stringformat:'i' %}selected{% endif %}>{{ st.state }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="q" value="{{ query }}" placeholder="Search district..." class="form-control" style="padding: 6px 12px; font-size: 13px; width: 150px;">
+                <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-filter"></i></button>
+                {% if query or selected_state %}<a href="{% url 'accounts:manage_districts' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-xmark"></i></a>{% endif %}
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th>District Name</th>
+                        <th>State</th>
+                        <th style="text-align: right; width: 140px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in districts %}
+                        <tr>
+                            <td class="tabular-num">#{{ d.Distid }}</td>
+                            <td><strong>{{ d.District }}</strong></td>
+                            <td><span class="badge badge-info">{{ d.statid.state }}</span></td>
+                            <td style="text-align: right;">
+                                <a href="{% url 'accounts:edit_district' d.Distid %}" class="btn btn-secondary btn-sm" title="Edit">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <form method="POST" action="{% url 'accounts:delete_district' d.Distid %}" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete district {{ d.District }}?');">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                                No districts found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

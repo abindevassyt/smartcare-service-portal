@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Consumers{% endblock %}
+{% block page_title %}Registered Consumers Oversight{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-users"></i> Consumer Directory ({{ consumers|length }})</h2>
+        <form method="GET" action="{% url 'accounts:admin_consumers' %}" style="display: flex; gap: 8px;">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search name, email, mobile..." class="form-control" style="padding: 6px 12px; font-size: 13px; width: 220px;">
+            <select name="status" class="form-control" style="padding: 6px 10px; font-size: 13px; width: 130px;">
+                <option value="">All Statuses</option>
+                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %}>Active</option>
+                <option value="Pending" {% if status_filter == 'Pending' %}selected{% endif %}>Pending</option>
+            </select>
+            <button type="submit" class="btn btn-secondary btn-sm"><i class="fa-solid fa-filter"></i></button>
+            {% if query or status_filter %}<a href="{% url 'accounts:admin_consumers' %}" class="btn btn-secondary btn-sm"><i class="fa-solid fa-xmark"></i></a>{% endif %}
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Consumer Name</th>
+                    <th>Contact (Email & Mobile)</th>
+                    <th>Location</th>
+                    <th>Type</th>
+                    <th>Reg Date</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in consumers %}
+                    <tr>
+                        <td class="tabular-num">#{{ c.consumer_id }}</td>
+                        <td>
+                            <strong>{{ c.fname }} {{ c.lname }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">DOB: {{ c.dob|date:"d M Y" }}</div>
+                        </td>
+                        <td>
+                            <div><i class="fa-regular fa-envelope"></i> {{ c.email }}</div>
+                            <div style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> {{ c.mob }}</div>
+                        </td>
+                        <td>{{ c.address }}, {{ c.Distid.District }} ({{ c.statid.state }}) - {{ c.pin }}</td>
+                        <td><span class="badge badge-info">{{ c.consumertype }}</span></td>
+                        <td>{{ c.regdate|date:"d M Y" }}</td>
+                        <td>
+                            {% if c.status == 'Active' %}
+                                <span class="badge badge-success">Active</span>
+                            {% else %}
+                                <span class="badge badge-warning">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <form method="POST" action="{% url 'accounts:admin_consumer_toggle_status' c.consumer_id %}" style="display: inline-block;">
+                                {% csrf_token %}
+                                {% if c.status == 'Active' %}
+                                    <button type="submit" class="btn btn-secondary btn-sm" title="Mark as Pending">
+                                        <i class="fa-solid fa-ban"></i> Deactivate
+                                    </button>
+                                {% else %}
+                                    <button type="submit" class="btn btn-success btn-sm" title="Activate Account">
+                                        <i class="fa-solid fa-check"></i> Activate
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            No consumers found matching criteria.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

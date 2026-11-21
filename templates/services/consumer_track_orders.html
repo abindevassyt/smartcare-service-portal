@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Track Service Orders{% endblock %}
+{% block page_title %}Track Work Orders & Status{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-route"></i> My Service Tickets ({{ orders_data|length }})</h2>
+        <a href="{% url 'services:consumer_book_service' %}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus"></i> Book Another Service
+        </a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>WO ID</th>
+                    <th>Request No</th>
+                    <th>Appliance</th>
+                    <th>Service Location</th>
+                    <th>Technician</th>
+                    <th>Warranty Check</th>
+                    <th>Estimate (?)</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in orders_data %}
+                    <tr>
+                        <td class="tabular-num">#{{ item.order.W_orderid }}</td>
+                        <td class="tabular-num"><strong>{{ item.order.Serv_req_no }}</strong></td>
+                        <td>
+                            <strong>{{ item.order.reg_id.prid.prname }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">S/N: {{ item.order.prod_no }}</div>
+                        </td>
+                        <td>{{ item.order.loc_type }}</td>
+                        <td>
+                            {% if item.order.techid %}
+                                <span style="font-weight: 600; color: #1E293B;">{{ item.order.techid.tech_name }}</span>
+                                <div style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-phone"></i> {{ item.order.techid.Mob }}</div>
+                            {% else %}
+                                <span class="badge badge-warning">Awaiting Assignment</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.in_warranty %}
+                                <span class="badge badge-success"><i class="fa-solid fa-shield"></i> Free (In Warranty)</span>
+                            {% else %}
+                                <span class="badge badge-danger">Out of Warranty</span>
+                            {% endif %}
+                        </td>
+                        <td class="tabular-num" style="font-weight: 700;">
+                            {% if item.in_warranty %}
+                                <span style="color: var(--status-green);">?0.00</span>
+                            {% elif item.order.Inv_amt > 0 %}
+                                ?{{ item.order.Inv_amt|floatformat:2 }}
+                            {% else %}
+                                <span style="color: var(--text-muted);">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.order.w_stid.W_status == 'Completed' %}
+                                <span class="badge badge-success">{{ item.order.w_stid.W_status }}</span>
+                            {% elif item.order.w_stid.W_status == 'Cancelled' or item.order.w_stid.W_status == 'Irreparable' %}
+                                <span class="badge badge-danger">{{ item.order.w_stid.W_status }}</span>
+                            {% else %}
+                                <span class="badge badge-warning">{{ item.order.w_stid.W_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <a href="{% url 'services:consumer_track_order_detail' item.order.W_orderid %}" class="btn btn-secondary btn-sm">
+                                <i class="fa-solid fa-eye"></i> Track
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 24px;">
+                            You have no active repair requests. Click "Book Another Service" to submit a service ticket.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

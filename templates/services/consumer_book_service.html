@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Repair Service{% endblock %}
+{% block page_title %}Book Appliance Repair / Maintenance Service{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-wrench"></i> Raise New Service Work Order</h2>
+    </div>
+
+    {% if not active_appliances %}
+        <div class="alert alert-warning">
+            <span>
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>Notice:</strong> You do not currently have any <strong>Verified Appliances</strong> (Isactive='Active').<br>
+                Please <a href="{% url 'services:consumer_register_product' %}" style="text-decoration: underline; font-weight: bold;">register your appliance here</a>. Once verified by our service technician, you will be able to book service tickets.
+            </span>
+        </div>
+    {% else %}
+        <form method="POST" action="{% url 'services:consumer_book_service' %}">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="reg_id">Select Verified Appliance *</label>
+                    <select id="reg_id" name="reg_id" class="form-control" required>
+                        <option value="">-- Choose from your active appliances --</option>
+                        {% for app in active_appliances %}
+                            <option value="{{ app.Reg_id }}">
+                                {{ app.prid.prname }} (Model: {{ app.prid.model }} | S/N: {{ app.prod_no }}) - Warranty Ends: {{ app.warnt_enddate|date:"d M Y" }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="loc_type">Preferred Service Location *</label>
+                    <select id="loc_type" name="loc_type" class="form-control">
+                        <option value="Home Service">Home Service (Technician visits your address)</option>
+                        <option value="Service Center Visit">Service Center Visit (Drop off at authorized center)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="calltype">Service Call Type *</label>
+                    <select id="calltype" name="calltype" class="form-control">
+                        <option value="Repair">Repair / Breakdown</option>
+                        <option value="Maintenance">Periodic Maintenance / Servicing</option>
+                        <option value="Installation">Installation / Setup</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label" for="issue_des">Problem / Defect Description *</label>
+                    <textarea id="issue_des" name="issue_des" class="form-control" rows="4" placeholder="Describe the symptom (e.g. No display, abnormal sound, water leakage, cooling issue)..." required></textarea>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 15px;">
+                    <i class="fa-solid fa-paper-plane"></i> Submit Repair Request
+                </button>
+            </div>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}

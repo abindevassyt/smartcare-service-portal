@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Technician{% endblock %}
+{% block page_title %}Edit Technician #{{ tech.techid }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-user-pen"></i> Update Technician Profile</h2>
+        <a href="{% url 'accounts:manage_technicians' %}" class="btn btn-secondary btn-sm">Back to Technicians</a>
+    </div>
+
+    <form method="POST" action="{% url 'accounts:edit_technician' tech.techid %}">
+        {% csrf_token %}
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label" for="tech_name">Technician Full Name *</label>
+                <input type="text" id="tech_name" name="tech_name" class="form-control" value="{{ tech.tech_name }}" required maxlength="30">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Gender">Gender</label>
+                <select id="Gender" name="Gender" class="form-control">
+                    <option value="Male" {% if tech.Gender == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if tech.Gender == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if tech.Gender == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label" for="Address">Address *</label>
+                <input type="text" id="Address" name="Address" class="form-control" value="{{ tech.Address }}" required maxlength="100">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="statid">State *</label>
+                <select id="statid" name="statid" class="form-control" required>
+                    {% for st in states %}
+                        <option value="{{ st.statid }}" {% if tech.statid_id == st.statid %}selected{% endif %}>{{ st.state }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Distid">District *</label>
+                <select id="Distid" name="Distid" class="form-control" required>
+                    {% for d in districts %}
+                        <option value="{{ d.Distid }}" {% if tech.Distid_id == d.Distid %}selected{% endif %}>{{ d.District }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Quali">Qualification *</label>
+                <input type="text" id="Quali" name="Quali" class="form-control" value="{{ tech.Quali }}" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Exp">Experience</label>
+                <input type="text" id="Exp" name="Exp" class="form-control" value="{{ tech.Exp }}" maxlength="10">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Mob">Mobile Number *</label>
+                <input type="tel" id="Mob" name="Mob" class="form-control" value="{{ tech.Mob }}" required maxlength="20">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Email">Email (Portal Username) *</label>
+                <input type="email" id="Email" name="Email" class="form-control" value="{{ tech.Email }}" required maxlength="30">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">Change Password (leave empty to keep current)</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="New password">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="Status">Status</label>
+                <select id="Status" name="Status" class="form-control">
+                    <option value="Active" {% if tech.Status == 'Active' %}selected{% endif %}>Active</option>
+                    <option value="Inactive" {% if tech.Status == 'Inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+            <button type="submit" class="btn btn-primary" style="flex: 1;">
+                <i class="fa-solid fa-check"></i> Update Technician
+            </button>
+            <a href="{% url 'accounts:manage_technicians' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
